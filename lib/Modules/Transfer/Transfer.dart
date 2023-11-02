@@ -189,7 +189,7 @@ class _TransferState extends State<Transfer> {
                                 flex: 5,
                                 child: Center(
                                     child: Text(
-                                  Moment.fromDateTime(service.dateTime$.value).format("dd-MM-yyyy HH:mm"),
+                DateFormat("dd-MM-yyyy HH:mm").format(service.dateTime$.value),
                                   textAlign: TextAlign.center,
                                   style: TextStyle(color: Colors.black87, fontSize: 16),
                                 )),

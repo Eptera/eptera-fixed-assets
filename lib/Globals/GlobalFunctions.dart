@@ -135,7 +135,7 @@ Future<bool> makeFastTransfer(String barcode, FixAssetLocation? fromLocation, Fi
         title: Text("Fast Transfer".tr()),
         content: Wrap(
           children: [
-            Row(children: [Expanded(flex: 3, child: Text("DateTime".tr() + " : ")), Expanded(flex: 5, child: Text("${Moment.now().format("dd/MM/yyyy HH:mm")}"))]),
+            Row(children: [Expanded(flex: 3, child: Text("DateTime".tr() + " : ")), Expanded(flex: 5, child: Text("${DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())}"))]),
             Divider(height: 5, indent: 5, endIndent: 5),
             Row(children: [Expanded(flex: 3, child: Text("Name".tr() + " : ")), Expanded(flex: 5, child: Text("${fixedAsset?.name}"))]),
             Divider(height: 5, indent: 5, endIndent: 5),
@@ -375,9 +375,9 @@ Future<FixAssetCount?> showWidget_CountingMasterbyName(BuildContext context, Str
                 title: Text(branches$.value[list[index].branchid]?.name == null ? '' : branches$.value[list[index].branchid]!.name!),
                 subtitle: Row(
                   children: [
-                    if (list[index].periodstart != null) Expanded(child: Center(child: Text(Moment.fromDate(list[index].periodstart!).format("yyyy/MM/dd")))),
+                    if (list[index].periodstart != null) Expanded(child: Center(child: Text(DateFormat('yyyy/MM/dd').format(list[index].periodstart!)))),
                     if (list[index].periodstart != null) const Icon(Icons.arrow_forward_rounded),
-                    if (list[index].periodend != null) Expanded(child: Center(child: Text(Moment.fromDate(list[index].periodend!).format("yyyy/MM/dd")))),
+                    if (list[index].periodend != null) Expanded(child: Center(child: Text(DateFormat('yyyy/MM/dd').format(list[index].periodend!)))),
                   ],
                 ),
                 onTap: () async {

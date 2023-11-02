@@ -56,7 +56,7 @@ class _CountingState extends State<Counting> {
                                     ),
                                     child: Text(
                                       fixAssetsCount$.value.values.toList()[index].periodstart != null
-                                          ? Moment.fromDate(fixAssetsCount$.value.values.toList()[index].periodstart!).format("yyyy/MM/dd")
+                                          ? DateFormat("yyyy/MM/dd").format(fixAssetsCount$.value.values.toList()[index].periodstart!)
                                           : "",
                                       textAlign: TextAlign.center,
                                       style: TextStyle(fontSize: 16),
@@ -80,7 +80,7 @@ class _CountingState extends State<Counting> {
                                     ),
                                     child: Text(
                                       fixAssetsCount$.value.values.toList()[index].periodend != null
-                                          ? Moment.fromDate(fixAssetsCount$.value.values.toList()[index].periodend!).format("yyyy/MM/dd")
+                                          ? DateFormat("yyyy/MM/dd").format(fixAssetsCount$.value.values.toList()[index].periodend!)
                                           : "",
                                       textAlign: TextAlign.center,
                                       style: TextStyle(fontSize: 16),

@@ -145,7 +145,7 @@ class _CountingDetailsState extends State<CountingDetails> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "${branches$.value[service.selectedCounting$.value?.branchid]!.name == null ? " " : (branches$.value[service.selectedCounting$.value?.branchid]!.name!)}\n${service.selectedCounting$.value?.periodstart == null ? " " : Moment.fromDate(service.selectedCounting$.value!.periodstart!).format("yyyy/MM/dd")} - ${service.selectedCounting$.value!.periodend != null ? Moment.fromDate(service.selectedCounting$.value!.periodend!).format("yyyy/MM/dd") : ""}",
+          "${branches$.value[service.selectedCounting$.value?.branchid]!.name == null ? " " : (branches$.value[service.selectedCounting$.value?.branchid]!.name!)}\n${service.selectedCounting$.value?.periodstart == null ? " " : DateFormat("yyyy/MM/dd").format(service.selectedCounting$.value!.periodstart!)} - ${service.selectedCounting$.value!.periodend != null ? DateFormat("yyyy/MM/dd").format(service.selectedCounting$.value!.periodend!) : ""}",
           textAlign: TextAlign.center,
         ),
         actions: [

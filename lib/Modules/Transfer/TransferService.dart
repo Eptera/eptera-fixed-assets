@@ -21,8 +21,8 @@ class TransferService {
         "Parameters": {
           "HOTELID": loginResponse.tenancy?.hotelid,
           "JSONDATA": json.encode({
-            "Date": Moment.fromDate(dateTime$.value).format("yyyy-MM-dd"),
-            "Time": Moment.fromDate(dateTime$.value).format("HH:mm"),
+            "Date": DateFormat("yyyy-MM-dd").format(dateTime$.value),
+            "Time": DateFormat("HH:mm").format(dateTime$.value),
             "MasterAssetID": fixedAssetItem$.value?.id,
             "BarcodeID": fixedAssetItem$.value?.renewable == true ? null : fixedAssetItem$.value!.barkodeList?[fixedAssetItem$.value?.barcode]?.id,
             "ResponsibleStaffID": transferType$.value == 12 ? selectedStaff$.value?.id : null,
@@ -57,8 +57,8 @@ class TransferService {
         "Parameters": {
           "HOTELID": loginResponse.tenancy?.hotelid,
           "JSONDATA": json.encode({
-            "Date": Moment.now().format("yyyy-MM-dd"),
-            "Time": Moment.now().format("HH:mm"),
+            "Date": DateFormat("yyyy-MM-dd").format(DateTime.now()),
+            "Time": DateFormat("HH:mm").format(DateTime.now()),
             "MasterAssetID": asset.id,
             "BarcodeID": asset.barkodeList?[asset.barcode]?.id,
             "TransferTypeID": 12,

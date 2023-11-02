@@ -204,7 +204,7 @@ class Database {
             "LocationCounting": false,
             "Items": newScannedItems
                 .map((e) => {
-                      "DateTime": Moment.now().format("yyyy-MM-dd HH:mm"),
+                      "DateTime": DateFormat("yyyy-MM-dd HH:mm").format(DateTime.now()),
                       "LocationID": e.locationid,
                       "MasterAssetID": e.barcodeID != null ? null : e.masterassetid,
                       "BarcodeID": e.barcodeID,
@@ -241,7 +241,7 @@ class Database {
       currentList.forEach((key, value) {
         if (value) {
           requestObj.add({
-            "DateTime": Moment.now().format("yyyy-MM-dd HH:mm"),
+            "DateTime": DateFormat("yyyy-MM-dd HH:mm").format(DateTime.now()),
             "LocationID": selectedLocation?.id,
             "MasterAssetID": fixAssets_byBarcodeID$.value[key]?.id,
             "BarcodeID": key,

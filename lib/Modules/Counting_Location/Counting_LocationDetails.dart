@@ -155,7 +155,7 @@ class _Counting_LocationDetailsState extends State<Counting_LocationDetails> {
                           (fixAssets_byBarcodeID$.value[service.currentList$.value.keys.toList()[index]]?.readingDate != null &&
                                   (!service.currentList$.value.values.toList()[index]))
                               ? Text(
-                                  "${"Last Scanned Date".tr()} : ${Moment.fromDate(fixAssets_byBarcodeID$.value[service.currentList$.value.keys.toList()[index]]!.readingDate!).format("yyyy-MM-dd HH:mm")}")
+                                  "${"Last Scanned Date".tr()} : ${DateFormat("yyyy-MM-dd HH:mm").format(fixAssets_byBarcodeID$.value[service.currentList$.value.keys.toList()[index]]!.readingDate!)}")
                               : Text(
                                   "${"Last Scanned Date".tr()} : ",
                                   style: TextStyle(color: Colors.transparent),
