@@ -34,7 +34,7 @@ class TransferService {
         }
       }).first;
 
-      await showWarningDialog("Success".tr(), "Transaction Inserted Successfully.".tr());
+      await showWarningDialog("Success".tr(), "Transaction Inserted Successfully".tr());
 
       fixedAssetItem$.value?.locId = to$.value?.id;
 
@@ -69,7 +69,7 @@ class TransferService {
         }
       }).first;
 
-      await showWarningDialog("Success".tr(), "Transaction Inserted Successfully.".tr());
+      await showWarningDialog("Success".tr(), "Transaction Inserted Successfully".tr());
     } on Exception catch (e) {
       await showErrorDialog(e.toString());
     }

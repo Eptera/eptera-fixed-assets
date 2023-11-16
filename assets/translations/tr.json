@@ -180,5 +180,7 @@
   "Now": "Şu an",
   "Approve Transfer": "Transferi Onayla",
   "Location": "Lokasyon",
-  "The offline count has been successfully saved to the offline count screen.": "Çevrimdışı sayım ekranına başarıyla kaydedildi."
+  "The offline count has been successfully saved to the offline count screen.": "Çevrimdışı sayım ekranına başarıyla kaydedildi.",
+  "Transaction Inserted Successfully": "İşlem Başarıyla Tamamlandı"
+
 }

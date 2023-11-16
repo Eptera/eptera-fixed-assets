@@ -113,7 +113,7 @@ class _TransferState extends State<Transfer> {
                                   ),
                                 ),
                               ),
-                              SizedBox(width: 20),
+                              const SizedBox(width: 20),
                               Expanded(
                                 flex: 5,
                                 child: Center(
@@ -145,10 +145,11 @@ class _TransferState extends State<Transfer> {
                             service.transferType$.value = (value ?? 12);
                             qty.text = "1";
                             service.to$.add(null);
-                            if (service.transferType$.value == 15) {
-                              service.fixedAssetItem$.add(null);
-                              service.from$.add(null);
-                            }
+                            //TODO: Alarko için kapatıldı. Daha sonrasında görüşülüp karar verilecek.
+                            // if (service.transferType$.value == 15) {
+                            //   service.fixedAssetItem$.add(null);
+                            //   service.from$.add(null);
+                            // }
                           },
                         ),
                       ),

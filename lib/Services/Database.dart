@@ -14,11 +14,11 @@ class Database {
         "Object": "FN_FIXASSET_GETMOBILEDATA",
         "Parameters": {
           "HOTELID": loginResponse.tenancy?.hotelid,
-          "GETBRANCHES": activeSelection[0],
-          "GETLOCATION": activeSelection[1],
-          "GETFIXASSET": activeSelection[2],
-          "GETCOUNTING": activeSelection[3],
-          "GETRESPONSIBLESTAFF": activeSelection[4],
+          "GETBRANCHES": activeSelection[0] ?? false,
+          "GETLOCATION": activeSelection[1] ?? false,
+          "GETFIXASSET": activeSelection[2]?? false,
+          "GETCOUNTING": activeSelection[3]?? false,
+          "GETRESPONSIBLESTAFF": activeSelection[4]?? false,
           "COUNTINGID": null,
           "BRANCHIDS": null
         },

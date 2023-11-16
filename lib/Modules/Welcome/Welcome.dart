@@ -458,11 +458,13 @@ class _WelcomeState extends State<Welcome> {
                                   ),
                                 ),
                                 onTap: () {
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => Counting_Location(),
-                                      )).then((value) => currentContext = context);
+                                  showLoadingDialog(db.setDataFromOnline([true, true, true, true, true])).then((value) {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => Counting_Location(),
+                                        )).then((value) => currentContext = context);
+                                  });
                                 },
                               ),
                             ),

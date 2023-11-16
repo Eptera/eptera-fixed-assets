@@ -58,6 +58,24 @@ Future<bool> checkConnection() async {
   }
 }
 
+Future<T> showLoadingDialog<T>(Future<T> func) async {
+  return await showDialog(
+    barrierDismissible: false,
+    context: currentContext,
+    builder: (context) {
+      func.then((v) {
+        Navigator.pop(context, v);
+      });
+
+      return Container(
+        child: Center(
+          child: CircularProgressIndicator(color: Colors.white),
+        ),
+      );
+    },
+  );
+}
+
 Future showWarningDialog(String title, String content) async {
   await showDialog(
       context: currentContext,
