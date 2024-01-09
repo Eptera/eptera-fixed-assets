@@ -5,16 +5,20 @@ import '../Globals/index.dart';
 class Scanner implements ScannerCallback {
   HoneywellScanner honeywellScanner = HoneywellScanner();
 
+
   Scanner() {
+
     honeywellScanner = HoneywellScanner(scannerCallback: this);
     updateScanProperties();
     honeywellScanner.startScanner();
+
   }
   updateScanProperties() {
     List<CodeFormat> codeFormats = [];
     codeFormats.addAll(CodeFormatUtils.ALL_1D_FORMATS);
     codeFormats.addAll(CodeFormatUtils.ALL_2D_FORMATS);
     honeywellScanner.setProperties(CodeFormatUtils.getAsPropertiesComplement(codeFormats));
+
   }
 
   @override

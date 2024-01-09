@@ -33,23 +33,26 @@ class TransferService {
           })
         }
       }).first;
+      if(response.dataSets![0][0]["SUCCESS"] == 1){
 
-      await showWarningDialog("Success".tr(), "Transaction Inserted Successfully".tr());
+        fixedAssetItem$.value?.locId = to$.value?.id;
 
-      fixedAssetItem$.value?.locId = to$.value?.id;
+        if (fixedAssetItem$.value?.barcode != null) fixedAssetItem$.value?.barkodeList?[fixedAssetItem$.value?.barcode]?.locationId = to$.value?.id;
 
-      if (fixedAssetItem$.value?.barcode != null) fixedAssetItem$.value?.barkodeList?[fixedAssetItem$.value?.barcode]?.locationId = to$.value?.id;
+        if (fixedAssetItem$.value?.id != null) fixAssets$.value[fixedAssetItem$.value!.id!] = fixedAssetItem$.value!;
+        return UpdateResponse(success: true, message:response.dataSets![0][0]["MESSAGE"]);
+      }else{
+        return UpdateResponse(success: false, message: response.dataSets![0][0]["MESSAGE"]);
+      }
 
-      if (fixedAssetItem$.value?.id != null) fixAssets$.value[fixedAssetItem$.value!.id!] = fixedAssetItem$.value!;
 
-      return UpdateResponse(success: true);
+
     } on Exception catch (e) {
-      await showErrorDialog(e.toString());
       return UpdateResponse(success: false);
     }
   }
 
-  Future fastTransfer(FixAsset asset, int from, int to) async {
+  Future<UpdateResponse> fastTransfer(FixAsset asset, int from, int to) async {
     try {
       var response = await api.execute({
         "Action": "Execute",
@@ -68,10 +71,19 @@ class TransferService {
           })
         }
       }).first;
+      if(response.dataSets![0][0]["SUCCESS"] == 1){
 
-      await showWarningDialog("Success".tr(), "Transaction Inserted Successfully".tr());
+        fixedAssetItem$.value?.locId = to$.value?.id;
+
+        if (fixedAssetItem$.value?.barcode != null) fixedAssetItem$.value?.barkodeList?[fixedAssetItem$.value?.barcode]?.locationId = to$.value?.id;
+
+        if (fixedAssetItem$.value?.id != null) fixAssets$.value[fixedAssetItem$.value!.id!] = fixedAssetItem$.value!;
+        return UpdateResponse(success: true, message:response.dataSets![0][0]["MESSAGE"]);
+      }else{
+        return UpdateResponse(success: false, message: response.dataSets![0][0]["MESSAGE"]);
+      }
     } on Exception catch (e) {
-      await showErrorDialog(e.toString());
+      return UpdateResponse(success: false);
     }
   }
 }

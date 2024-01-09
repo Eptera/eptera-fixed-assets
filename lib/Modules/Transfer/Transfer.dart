@@ -370,24 +370,16 @@ class _TransferState extends State<Transfer> {
                             : () async {
                                 if (double.parse(qty.text) > 0.0) {
                                   service.qty$.add(double.parse(qty.text == "" ? "0.0" : qty.text));
-                                  await showDialog(
-                                    context: context,
-                                    builder: (context) {
-                                      service.addTransfer().then((value) {
-                                        if (value.success == true) {
-                                          service.to$.value = (null);
-                                          service.from$.value = (null);
-                                          service.fixedAssetItem$.add(null);
-                                        }
-                                        Navigator.pop(context);
-                                      });
-                                      return Container(
-                                        child: Center(
-                                          child: CircularProgressIndicator(),
-                                        ),
-                                      );
-                                    },
-                                  );
+                                  await showLoadingDialog(service.addTransfer()).then((value) {
+                                    if (value.success == true) {
+                                      service.to$.value = (null);
+                                      service.from$.value = (null);
+                                      service.fixedAssetItem$.add(null);
+                                      showWarningDialog(tr(value.message!), "Transaction Inserted Successfully".tr());
+                                    }else{
+                                       showWarningDialog("Error".tr(),tr(value.message!));
+                                    }
+                                  });
                                 }
                               },
                         child: Container(

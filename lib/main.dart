@@ -19,6 +19,11 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
+//PAHO3634
+//PAHO1542
+//PAHO5192
+//1-05 : PAHO6597
+
 Future<void> main() async {
   await Hive.initFlutter();
 
@@ -205,10 +210,10 @@ class _MyHomePageState extends State<MyHomePage> {
       usercode.text = "demo";
       password.text = "123";
 
-      // endPoint.text = "https://api.hillsidebeachclub.com";
-      // tenant.text = "27214";
-      // usercode.text = "ElektraWeb";
-      // password.text = "s9@|eBTD198q";
+      endPoint.text = "https://api.hillsidebeachclub.com";
+      tenant.text = "27214";
+      usercode.text = "ALARKO";
+      password.text = "ALARKO123.";
     } else {
       print("RELEASE MODE !!!");
       setState(() async {

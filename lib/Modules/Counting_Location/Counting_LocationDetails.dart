@@ -53,25 +53,30 @@ class _Counting_LocationDetailsState extends State<Counting_LocationDetails> {
               print(approved.toString());
               if (approved) {
                 if (fixAssetsLocations$.value[fixAssets_byBarcode$.value[barcode]!.barkodeList?[barcode]?.locationId]?.id != null && service.selectedLocation$.value?.id != null) {
-                  return;
+                  await showLoadingDialog(GetIt.I<TransferService>().fastTransfer(
+                     fixAssets_byBarcode$.value[barcode]!,
+                     fixAssetsLocations$.value[fixAssets_byBarcode$.value[barcode]!.barkodeList![barcode]!.locationId]!.id!,
+                     service.selectedLocation$.value!.id!,
+                   )).then((value) {
+                     if(value.success!){
+                       fixAssets_byLocation$.value[fixAssets_byBarcode$.value[barcode]!.barkodeList![barcode]!.locationId]!.removeWhere((e) => e.barcode == barcode);
+                       fixAssets_byLocation$.value[service.selectedLocation$.value!.id]!.add(fixAssets_byBarcode$.value[barcode]!);
+                       fixAssets$.value[fixAssets_byBarcode$.value[barcode]!.id]!.barkodeList![barcode]!.locationId = service.selectedLocation$.value!.id;
+                       fixAssets_byBarcode$.value[barcode]!.barkodeList![barcode]!.locationId = service.selectedLocation$.value!.id;
+                       approved = true;
+
+                       var oldList = service.currentList$.value;
+                       service.currentList$.value = {};
+
+                       fixAssets_byLocation$.value[service.selectedLocation$.value!.id]!.forEach((e) {
+                         if (service.currentList$.value[e.barcodeID] == null && e.barcodeID != null) service.currentList$.value[e.barcodeID!] = oldList[e.barcodeID!] ?? false;
+                       });
+                       showWarningDialog(value.message ?? "Success".tr(), "Transaction Inserted Successfully".tr());
+                     }else{
+                       showErrorDialog(value.message);
+                     }
+                   });
                 }
-                await GetIt.I<TransferService>().fastTransfer(
-                  fixAssets_byBarcode$.value[barcode]!,
-                  fixAssetsLocations$.value[fixAssets_byBarcode$.value[barcode]!.barkodeList![barcode]!.locationId]!.id!,
-                  service.selectedLocation$.value!.id!,
-                );
-                fixAssets_byLocation$.value[fixAssets_byBarcode$.value[barcode]!.barkodeList![barcode]!.locationId]!.removeWhere((e) => e.barcode == barcode);
-                fixAssets_byLocation$.value[service.selectedLocation$.value!.id]!.add(fixAssets_byBarcode$.value[barcode]!);
-                fixAssets$.value[fixAssets_byBarcode$.value[barcode]!.id]!.barkodeList![barcode]!.locationId = service.selectedLocation$.value!.id;
-                fixAssets_byBarcode$.value[barcode]!.barkodeList![barcode]!.locationId = service.selectedLocation$.value!.id;
-                approved = true;
-
-                var oldList = service.currentList$.value;
-                service.currentList$.value = {};
-
-                fixAssets_byLocation$.value[service.selectedLocation$.value!.id]!.forEach((e) {
-                  if (service.currentList$.value[e.barcodeID] == null && e.barcodeID != null) service.currentList$.value[e.barcodeID!] = oldList[e.barcodeID!] ?? false;
-                });
               }
             }
             if (approved) {

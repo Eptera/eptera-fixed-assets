@@ -54,20 +54,27 @@ class _CountingDetailsState extends State<CountingDetails> {
                     if (fixAssets_byBarcode$.value[barcode] != null &&
                         fixAssetsLocations$.value[fixAssets_byBarcode$.value[barcode]?.barkodeList?[barcode]?.locationId]?.id != null &&
                         service.selectedLocation$.value?.id != null) {
-                      await GetIt.I<TransferService>().fastTransfer(
+                      await showLoadingDialog(GetIt.I<TransferService>().fastTransfer(
                         fixAssets_byBarcode$.value[barcode]!,
                         fixAssetsLocations$.value[fixAssets_byBarcode$.value[barcode]!.barkodeList![barcode]!.locationId]!.id!,
                         service.selectedLocation$.value!.id!,
-                      );
+                      )).then((value) {
+                        if(value.success!){
+                          approved = true;
+                          if (service.selectedLocation$.value?.id != null && fixAssets_byLocation$.value[service.selectedLocation$.value?.id] == null) {
+                            fixAssets_byLocation$.value[service.selectedLocation$.value!.id!] = [];
+                          }
+
+                          fixAssets$.value[fixAssets_byBarcode$.value[barcode]?.id]?.barkodeList?[barcode]?.locationId = service.selectedLocation$.value?.id;
+                          fixAssets_byBarcode$.value[barcode]?.barkodeList?[barcode]?.locationId = service.selectedLocation$.value?.id;
+                          showWarningDialog(tr(value.message!), "Transaction Inserted Successfully".tr());
+                        }else{
+                          showErrorDialog(value.message);
+                        }
+                      });
                     }
 
-                    approved = true;
-                    if (service.selectedLocation$.value?.id != null && fixAssets_byLocation$.value[service.selectedLocation$.value?.id] == null) {
-                      fixAssets_byLocation$.value[service.selectedLocation$.value!.id!] = [];
-                    }
 
-                    fixAssets$.value[fixAssets_byBarcode$.value[barcode]?.id]?.barkodeList?[barcode]?.locationId = service.selectedLocation$.value?.id;
-                    fixAssets_byBarcode$.value[barcode]?.barkodeList?[barcode]?.locationId = service.selectedLocation$.value?.id;
                   }
                 }
               } else {

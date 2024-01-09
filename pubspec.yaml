@@ -44,7 +44,7 @@ dependencies:
 #  simple_moment: ^1.1.1
   soundpool: ^2.3.0
   flutter_barcode_scanner: ^2.0.0
-  honeywell_scanner: ^4.0.0+14
+  honeywell_scanner: ^5.0.0+2
   flutter_launcher_icons: ^0.13.0
   path_provider: ^2.0.14
   hive: ^2.2.3

@@ -377,10 +377,10 @@ packages:
     dependency: "direct main"
     description:
       name: honeywell_scanner
-      sha256: d389bee4b7afa35f969bbbab14583a59092f15a3c3ce76357923c73b4d9c48b2
+      sha256: "028f5882d4ba2859823c4121731a451e6e602259f6325571d5606cfb10784e4b"
       url: "https://pub.dev"
     source: hosted
-    version: "4.0.0+14"
+    version: "5.0.0+2"
   http:
     dependency: "direct main"
     description:
