@@ -1,10 +1,18 @@
+import 'package:flutter/material.dart';
 import '../Globals/index.dart';
 import 'package:http/http.dart' as http;
 
 class Api {
-  String url = "http://4001.hoteladvisor.net";
+  String url = "https://api.eptera.com/";
 
-  Future<void> login(tenant, usercode, password, {endPoint, authcode}) async {
+  Future<void> login(
+      String? tenant,
+      String? usercode,
+      String? password, {
+        endPoint,
+        authcode,
+        required BuildContext context,
+      }) async {
     try {
       var obj = {
         "Action": "Login",
@@ -37,6 +45,8 @@ class Api {
       throw Exception(e.toString());
     }
   }
+
+
 
   Stream<ExecuteResponse> execute(dynamic requestObject, [BehaviorSubject<bool>? cancelSubject, Function? requestTransformer]) async* {
     do {
@@ -151,7 +161,7 @@ class Api {
     });
     final http.Response response = await http.post(
       Uri.parse(url),
-      headers: ({"Content-Type": "application/json", "Referer": "app.elektraweb.com"}),
+      headers: ({"Content-Type": "application/json", "Referer": "app.eptera.com"}),
       body: body,
     );
     if (response.statusCode == 200) {

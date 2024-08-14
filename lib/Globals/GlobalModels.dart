@@ -1,7 +1,12 @@
-import 'package:fixed_assets_v3/Globals/index.dart';
+import 'package:eptera_fixed_asset/Globals/index.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/io_client.dart';
 part 'GlobalModels.g.dart';
+
+final Map<String, String> languages = {
+  "tr": "Türkçe",
+  "en": "English",
+};
 
 class ResponsibleStaff {
   ResponsibleStaff({

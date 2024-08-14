@@ -1,5 +1,4 @@
-import 'package:hive_flutter/hive_flutter.dart';
-
+import 'package:flutter/services.dart';
 import '../../Globals/index.dart';
 import 'package:flutter/material.dart';
 
@@ -18,6 +17,10 @@ class _CountingDetailsState extends State<CountingDetails> {
   @override
   void initState() {
     super.initState();
+
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: kWhite,
+    ));
 
     if (isOffline$.value && fixAssetOfflineCountItem$.value != null) {
       service.selectedCounting$.value = fixAssetOfflineCountItem$.value;
@@ -59,7 +62,7 @@ class _CountingDetailsState extends State<CountingDetails> {
                         fixAssetsLocations$.value[fixAssets_byBarcode$.value[barcode]!.barkodeList![barcode]!.locationId]!.id!,
                         service.selectedLocation$.value!.id!,
                       )).then((value) {
-                        if(value.success!){
+                        if (value.success!) {
                           approved = true;
                           if (service.selectedLocation$.value?.id != null && fixAssets_byLocation$.value[service.selectedLocation$.value?.id] == null) {
                             fixAssets_byLocation$.value[service.selectedLocation$.value!.id!] = [];
@@ -67,14 +70,12 @@ class _CountingDetailsState extends State<CountingDetails> {
 
                           fixAssets$.value[fixAssets_byBarcode$.value[barcode]?.id]?.barkodeList?[barcode]?.locationId = service.selectedLocation$.value?.id;
                           fixAssets_byBarcode$.value[barcode]?.barkodeList?[barcode]?.locationId = service.selectedLocation$.value?.id;
-                          showWarningDialog(tr(value.message!), "Transaction Inserted Successfully".tr());
-                        }else{
-                          showErrorDialog(value.message);
+                          kShowBanner(BannerType.SUCCESS, "Success".tr(), "Transaction inserted successfully".tr(), context);
+                        } else {
+                          kShowBanner(BannerType.ERROR, "Error".tr(), value.message ?? "An error occurred while inserting the transaction".tr(), context);
                         }
                       });
                     }
-
-
                   }
                 }
               } else {
@@ -94,9 +95,8 @@ class _CountingDetailsState extends State<CountingDetails> {
                   countingid: service.selectedCounting$.value?.id,
                   avgUnitprice: fixAssets_byBarcode$.value[barcode]!.boughtprice,
                   qty: qty,
-                  locationid: (fixAssets_byBarcode$.value[barcode]!.renewable ?? true) == true
-                      ? service.selectedLocation$.value?.id
-                      : fixAssets_byBarcode$.value[barcode]!.barkodeList?[barcode]?.locationId,
+                  locationid:
+                      (fixAssets_byBarcode$.value[barcode]!.renewable ?? true) == true ? service.selectedLocation$.value?.id : fixAssets_byBarcode$.value[barcode]!.barkodeList?[barcode]?.locationId,
                   masterassetid: fixAssets_byBarcode$.value[barcode]!.id,
                   barcodeID: fixAssets_byBarcode$.value[barcode]!.barkodeList?[barcode]?.id,
                   barcode: barcode,
@@ -133,8 +133,7 @@ class _CountingDetailsState extends State<CountingDetails> {
   Future<void> setLocalDataFunction() async {
     for (var i = 0; i < service.newScanned$.value.values.toList().length; i++) {
       if (service.newScanned$.value.values.toList()[i].barcode != null && fixAssets_byBarcode$.value[service.newScanned$.value.values.toList()[i].barcode] != null) {
-        fixAssets_byLocation$
-            .value[fixAssets_byBarcode$.value[service.newScanned$.value.values.toList()[i].barcode]?.barkodeList?[service.newScanned$.value.values.toList()[i].barcode]?.locationId]
+        fixAssets_byLocation$.value[fixAssets_byBarcode$.value[service.newScanned$.value.values.toList()[i].barcode]?.barkodeList?[service.newScanned$.value.values.toList()[i].barcode]?.locationId]
             ?.forEach((element) {
           if (element.barcode == service.newScanned$.value.values.toList()[i].barcode) {
             element.isScannedInApp = true;
@@ -150,279 +149,497 @@ class _CountingDetailsState extends State<CountingDetails> {
     var w = MediaQuery.of(context).size.width;
     var h = MediaQuery.of(context).size.height;
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        title: Text(
-          "${branches$.value[service.selectedCounting$.value?.branchid]!.name == null ? " " : (branches$.value[service.selectedCounting$.value?.branchid]!.name!)}\n${service.selectedCounting$.value?.periodstart == null ? " " : DateFormat("yyyy/MM/dd").format(service.selectedCounting$.value!.periodstart!)} - ${service.selectedCounting$.value!.periodend != null ? DateFormat("yyyy/MM/dd").format(service.selectedCounting$.value!.periodend!) : ""}",
-          textAlign: TextAlign.center,
-        ),
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: const Icon(
+              Icons.arrow_back,
+              color: kGrey700,
+            )),
         actions: [
           if (cameraModeIsActive$.value == true)
             IconButton(
-              icon: const Icon(Icons.camera_alt_rounded),
+              icon: SvgPicture.asset("assets/images/camera.svg"),
               onPressed: () async {
                 var barcode = await scanner.scanBarcodeNormal();
                 lastBarcode$.add(barcode);
               },
             ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
-        child: StreamBuilder(
-            stream: Rx.combineLatest2(service.newScanned$, service.selectedLocation$, (a, b) => null),
-            builder: (context, snapshot) {
-              return Padding(
-                padding: EdgeInsets.all(5),
-                child: Column(
-                  children: [
-                    Wrap(
-                      spacing: 20,
-                      runSpacing: 20,
-                      children: [
-                        Container(
-                          height: 50,
-                          decoration: BoxDecoration(
-                              boxShadow: [BoxShadow(color: Colors.black12, offset: Offset(0, 0), spreadRadius: 5, blurRadius: 3)],
-                              border: Border.all(color: Colors.black38, width: 1, style: BorderStyle.solid),
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(5)),
-                          child: InkWell(
-                            onTap: () async {
-                              var item = await showSearchWidget_FixedAssetsLocationName();
-                              if (item != null) service.selectedLocation$.add(item);
-                            },
-                            child: Row(
-                              children: [
-                                Expanded(
-                                    child: Container(
-                                        child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Padding(padding: const EdgeInsets.all(5), child: Text(service.selectedLocation$.value?.name ?? '')),
-                                ))),
-                                SizedBox(width: 10),
-                                Container(child: Padding(padding: EdgeInsets.only(left: 10.0, right: 10.0), child: Icon(Icons.list))),
-                              ],
-                            ),
-                          ),
-                        ),
-                        ListView.separated(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          itemCount: service.newScanned$.value.length,
-                          itemBuilder: (context, index) {
-                            return Stack(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(10),
-                                  child: Container(
-                                    width: w - 25,
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(5),
-                                        color: Colors.white,
-                                        boxShadow: [BoxShadow(color: Colors.black12, offset: Offset(0, 0), spreadRadius: 3, blurRadius: 2)]),
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left: 30, top: 5, right: 5, bottom: 5),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: Align(
-                                              alignment: Alignment.centerLeft,
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
+          IconButton(
+              onPressed: () async {
+                showModalBottomSheet(
+                    isDismissible: false,
+                    context: context,
+                    isScrollControlled: true,
+                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+                    builder: (BuildContext bottomSheetContext) {
+                      return DraggableScrollableSheet(
+                          expand: false,
+                          maxChildSize: 0.4,
+                          minChildSize: 0.3,
+                          initialChildSize: 0.3,
+                          builder: (draggableContext, controller) {
+                            return Container(
+                              decoration: const BoxDecoration(color: kWhite, borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+                              child: Stack(children: [
+                                Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      decoration: const BoxDecoration(
+                                        borderRadius: BorderRadius.vertical(
+                                          top: Radius.circular(35),
+                                        ),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(top: 32, left: 16, right: 16),
+                                        child: Wrap(
+                                          crossAxisAlignment: WrapCrossAlignment.start,
+                                          runSpacing: 16,
+                                          children: [
+                                            InkWell(
+                                              onTap: () async {
+                                                Navigator.pop(bottomSheetContext);
+                                                await showDialog(
+                                                  context: currentContext,
+                                                  builder: (context) {
+                                                    TextEditingController barcode = TextEditingController();
+                                                    return Column(
+                                                      mainAxisAlignment: MainAxisAlignment.end,
+                                                      children: [
+                                                        AlertDialog(
+                                                          titlePadding: EdgeInsets.only(left: 16, top: 20, right: 16),
+                                                          contentPadding: EdgeInsets.only(left: 16, top: 24, bottom: 24, right: 16),
+                                                          actionsPadding: EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                                                          insetPadding: EdgeInsets.only(left: 16, top: 16, right: 16, bottom: 32),
+                                                          title: Text(
+                                                            "Search Barcode".tr(),
+                                                            style: k18w600Black(color: kGrey900),
+                                                          ),
+                                                          content: SizedBox(
+                                                            width: w - 32,
+                                                            child: Column(
+                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                              children: [
+                                                                Text(
+                                                                  "Barcode No".tr(),
+                                                                  style: k14w500Black(color: kGrey700),
+                                                                ),
+                                                                SizedBox(
+                                                                  height: 6,
+                                                                ),
+                                                                Row(
+                                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                  children: [
+                                                                    Container(
+                                                                      width: w - 114,
+                                                                      child: CTextFormField(
+                                                                          textInputType: TextInputType.number,
+                                                                          hasIcon: false,
+                                                                          controller: barcode,
+                                                                          hintText: "Enter barcode number".tr(),
+                                                                          textInputAction: TextInputAction.done,
+                                                                          onChange: (value) {}),
+                                                                    ),
+                                                                    InkWell(
+                                                                      onTap: () async {
+                                                                        currentContext = context;
+                                                                        await scanner.scanBarcodeNormal();
+                                                                      },
+                                                                      child: Container(
+                                                                        padding: EdgeInsets.all(10),
+                                                                        decoration:
+                                                                        BoxDecoration(color: kWhite, borderRadius: BorderRadius.circular(8), border: Border.all(color: kBorderColor2)),
+                                                                        child: SvgPicture.asset("assets/images/barcode.svg"),
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                          actions: [
+                                                            Column(
+                                                              children: [
+                                                                StreamBuilder(
+                                                                    stream: lastBarcode$.stream,
+                                                                    builder: (context, snapshot) {
+                                                                      return ElevatedButton(
+                                                                        onPressed: () async {
+                                                                          Navigator.pop(context);
+                                                                          lastBarcode$.add(barcode.text);
+                                                                        },
+                                                                        child: Text(
+                                                                          "Search".tr(),
+                                                                          style: k16w600Black(color: kWhite),
+                                                                        ),
+                                                                      );
+                                                                    }),
+                                                                SizedBox(
+                                                                  height: 8,
+                                                                ),
+                                                                ElevatedButton(
+                                                                  onPressed: () => Navigator.pop(context),
+                                                                  child: Text(
+                                                                    "Cancel".tr(),
+                                                                    style: k16w600Black(color: kGrey700),
+                                                                  ),
+                                                                  style: ElevatedButton.styleFrom(
+                                                                    primary: kWhite,
+                                                                    side: BorderSide(color: kBorderColor),
+                                                                    shape: RoundedRectangleBorder(
+                                                                      borderRadius: BorderRadius.circular(8),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ],
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.start,
                                                 children: [
-                                                  Text("${fixAssets$.value[service.newScanned$.value.values.toList()[index].masterassetid]?.name ?? ''}"),
-                                                  if (service.newScanned$.value.values.toList()[index].barcode != null)
-                                                    Text(
-                                                      "${service.newScanned$.value.values.toList()[index].barcode ?? ''}",
-                                                      style: TextStyle(color: Colors.grey),
-                                                    ),
+                                                  SvgPicture.asset("assets/images/search_barcode_20.svg"),
+                                                  SizedBox(
+                                                    width: 8,
+                                                  ),
+                                                  Text(
+                                                    "Add By Barcode".tr(),
+                                                    style: k14w500Black(color: kGrey900),
+                                                  )
                                                 ],
                                               ),
                                             ),
-                                          ),
-                                          Wrap(
-                                            direction: Axis.horizontal,
-                                            spacing: 5,
-                                            runSpacing: 5,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.all(5),
-                                                child: Text(
-                                                  "${service.newScanned$.value.values.toList()[index].qty}",
-                                                  textAlign: TextAlign.center,
-                                                ),
-                                              ),
-                                              InkWell(
-                                                child: Icon(
-                                                  Icons.clear,
-                                                  color: Colors.red,
-                                                ),
-                                                onTap: () async {
-                                                  var result = await showDeleteConfirmDialog();
-                                                  if (result == true) {
-                                                    service.newScanned$.value.remove(service.newScanned$.value.values.toList()[index].masterassetid);
-                                                    service.newScanned$.add(service.newScanned$.value);
+                                            InkWell(
+                                              onTap: () async {
+                                                Navigator.pop(bottomSheetContext);
+                                                var qty = 1.0;
+
+                                                var result = await showSearchWidget_FixedAssetName();
+                                                if (result?.id != null && result?.barkodeList != null) {
+                                                  if (!(result!.renewable == true)) {
+                                                    if (result.barkodeList!.values.toList().isNotEmpty) {
+                                                      var value = await Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                          builder: (context) => FixedAssetBarcodes(result.barkodeList!.values.toList()),
+                                                        ),
+                                                      );
+
+                                                      if (value != null) {
+                                                        currentContext = context;
+                                                        result.barcode = value.barcode;
+
+
+                                                      }else{
+                                                        currentContext = context;
+                                                      }
+                                                    }
                                                   }
-                                                },
+                                                  var qtyResult = await service.showFixedAssetCountDialog(
+                                                    result,
+                                                    quantityStreamValue$,
+                                                  );
+                                                  qty = qtyResult ?? 1;
+
+                                                  service.newScanned$.value[result.id!] = FixAssetCountDetail(
+                                                    countingid: service.selectedCounting$.value?.id,
+                                                    avgUnitprice: result.boughtprice,
+                                                    qty: qty,
+                                                    locationid: service.selectedLocation$.value?.id,
+                                                    masterassetid: result.id,
+                                                    barcodeID: result.renewable == true ? null : result.barkodeList?[result.barcode]?.id,
+                                                    barcode: result.renewable == true ? null : result.barcode,
+                                                  );
+                                                  service.newScanned$.add(service.newScanned$.value);
+                                                }
+                                              },
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                children: [
+                                                  SvgPicture.asset("assets/images/add_by_stock.svg"),
+                                                  SizedBox(
+                                                    width: 8,
+                                                  ),
+                                                  Text("Add By Fixed Asset Name".tr(), style: k14w500Black(color: kGrey900))
+                                                ],
                                               ),
-                                            ],
-                                          ),
-                                        ],
+                                            ),
+                                            InkWell(
+                                              onTap: () {
+                                                Navigator.pop(bottomSheetContext);
+                                                service.newScanned$.value.forEach((key, value) {});
+                                                showDialog(
+                                                  barrierDismissible: false,
+                                                  context: context,
+                                                  builder: (context) {
+                                                    isOffline$.value
+                                                        ? db
+                                                        .sendCountingDataOffline(
+                                                      newScannedItems: service.newScanned$.value.values.toList(),
+                                                    )
+                                                        .then((value) async {
+                                                      if (value == true) {
+                                                        await setLocalDataFunction();
+                                                        service.newScanned$.add({});
+                                                        Navigator.pop(context);
+                                                      kShowBanner(BannerType.SUCCESS,"Success".tr(), "The offline count has been successfully saved to the offline count screen.".tr(),context);
+                                                      }else{
+                                                        Navigator.pop(context);
+                                                      }
+                                                    })
+                                                        : db
+                                                        .sendCountingDataOnline(newScannedItems: service.newScanned$.value.values, selectedCounting: service.selectedCounting$.value)
+                                                        .then((value) async {
+                                                      if (value.success == true) {
+                                                        await setLocalDataFunction();
+                                                        service.newScanned$.add({});
+                                                      }
+                                                      Navigator.pop(context);
+                                                    });
+                                                    return Container(
+                                                      child: Center(
+                                                        child: CircularProgressIndicator(),
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                children: [
+                                                  SvgPicture.asset("assets/images/save_20.svg"),
+                                                  SizedBox(
+                                                    width: 8,
+                                                  ),
+                                                  Text("Save".tr(), style: k14w500Black(color: kGrey900))
+                                                ],
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Align(
+                                  alignment: Alignment.bottomCenter,
+                                  child: Padding(
+                                    padding: EdgeInsets.only(
+                                      bottom: MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom : 32,
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                        },
+                                        style: ElevatedButton.styleFrom(primary: kWhite, side: BorderSide(color: kBorderColor)),
+                                        child: Text(
+                                          "Cancel".tr(),
+                                          style: k16w600Black(color: kGrey700),
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                                Container(
-                                  width: 30,
-                                  height: 30,
-                                  decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(15),
-                                      color: Colors.white,
-                                      boxShadow: [BoxShadow(color: Colors.black12, offset: Offset(0, 0), spreadRadius: 3, blurRadius: 2)]),
-                                  child: Center(
-                                    child: Text(
-                                      (index + 1).toString(),
-                                      style: TextStyle(color: Colors.blueGrey, fontWeight: FontWeight.bold, fontSize: 18),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                              ]),
                             );
-                          },
-                          separatorBuilder: (context, index) => Divider(height: 1),
-                        )
-                      ],
+                          });
+                    });
+              },
+              icon: SvgPicture.asset("assets/images/menu.svg"))
+        ],
+        bottom: PreferredSize(
+          preferredSize: Size(w, 80),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  branches$.value[service.selectedCounting$.value?.branchid]!.name ?? "-",
+                  style: k16w600Black(color: kGrey900),
+                ),
+                SizedBox(
+                  height: 12,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      width: (w - 64) / 2,
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(color: kWhite, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFFECDC9))),
+                      child: Text(
+                        service.selectedCounting$.value?.periodstart == null ? " " : DateFormat("yyyy/MM/dd").format(service.selectedCounting$.value!.periodstart!),
+                        style: k14w500Black(
+                          color: const Color(0xFFB32218),
+                        ),
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     SizedBox(
-                      height: h * 0.14,
+                      width: 8,
                     ),
+                    Icon(
+                      Icons.arrow_forward,
+                      color: Color(0xFF17B26A),
+                      size: 16,
+                    ),
+                    SizedBox(
+                      width: 8,
+                    ),
+                    Container(
+                      width: (w - 64) / 2,
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(color: kWhite, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFAAEFC6))),
+                      child: Text(
+                        service.selectedCounting$.value!.periodend != null ? DateFormat("yyyy/MM/dd").format(service.selectedCounting$.value!.periodend!) : "",
+                        style: k14w500Black(
+                          color: const Color(0xFF067647),
+                        ),
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )
                   ],
                 ),
-              );
-            }),
+                SizedBox(
+                  height: 20,
+                )
+              ],
+            ),
+          ),
+        ),
       ),
-      floatingActionButton: UnicornDialer(
-        finalButtonIcon: Icon(Icons.clear),
-        parentButton: Icon(Icons.menu),
-        parentButtonBackground: Colors.blueGrey,
-        hasBackground: true,
-        backgroundColor: Colors.black12,
-        orientation: 1,
-        childPadding: 20,
-        childButtons: [
-          UnicornButton(
-            null,
-            null,
-            null,
-            hasLabel: true,
-            labelText: "Add By Barcode".tr(),
-            currentButton: FloatingActionButton(
-              heroTag: "bybarcode",
-              mini: true,
-              child: Icon(Icons.add),
-              onPressed: () async {
-                var barcode = await showGetBarcodeDialog();
-
-                if (fixAssets_byBarcode$.value[barcode] != null) {
-                  lastBarcode$.add(barcode!);
-                } else {
-                  if (barcode != null) {
-                    await showErrorDialog("No Fix Asset found for this barcode".tr());
-                  }
-                }
-              },
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          children: [
+            const SizedBox(
+              height: 16,
             ),
-          ),
-          UnicornButton(
-            null,
-            null,
-            null,
-            hasLabel: true,
-            labelText: "Add By Stock Name".tr(),
-            currentButton: FloatingActionButton(
-              heroTag: "byname",
-              mini: true,
-              child: Icon(Icons.add),
-              onPressed: () async {
-                var qty = 1.0;
-
-                var result = await showSearchWidget_FixedAssetName();
-                if (result?.id != null && result?.barkodeList != null) {
-                  if (!(result!.renewable == true)) {
-                    var barcodeItem = await showSearchWidget_FixedAssetBarcodes(result.barkodeList!.values.toList());
-                    if (barcodeItem != null) {
-                      result.barcode = barcodeItem.barcode;
+            Wrap(
+              children: [
+                StreamBuilder(
+                    stream: service.selectedLocation$.stream,
+                    builder: (context, snapshot) {
+                      return ElevatedButton(
+                        onPressed: () async {
+                          var item = await showSearchWidget_FixedAssetsLocationName();
+                          if (item != null) service.selectedLocation$.add(item);
+                        },
+                        style: ElevatedButton.styleFrom(minimumSize: Size(w - 64, 44), primary: kWhite, side: BorderSide(color: kBorderColor)),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              service.selectedLocation$.value?.name ?? "Select Location".tr(),
+                              style: k14w500Black(color: kGrey700),
+                            ),
+                            SvgPicture.asset("assets/images/arrow_down.svg")
+                          ],
+                        ),
+                      );
                     }
-                  }
-
-                  var qtyResult = await service.showFixedAssetCountDialog(
-                    result,
-                    quantityStreamValue$,
-                  );
-                  qty = qtyResult ?? 1;
-
-                  service.newScanned$.value[result.id!] = FixAssetCountDetail(
-                    countingid: service.selectedCounting$.value?.id,
-                    avgUnitprice: result.boughtprice,
-                    qty: qty,
-                    locationid: service.selectedLocation$.value?.id,
-                    masterassetid: result.id,
-                    barcodeID: result.renewable == true ? null : result.barkodeList?[result.barcode]?.id,
-                    barcode: result.renewable == true ? null : result.barcode,
-                  );
-                  service.newScanned$.add(service.newScanned$.value);
-                }
-              },
+                ),
+                StreamBuilder(
+                    stream: service.newScanned$.stream,
+                    builder: (context, snapshot) {
+                      if(service.newScanned$.value.isEmpty){
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              SvgPicture.asset("assets/images/asset_not_found.svg"),
+                              const SizedBox(height: 16,),
+                              Text("You can add fixed assets from the menu icon, by scanning the barcode or by selecting the asset from the list".tr(),style: k14w400Black(color: kGrey600),textAlign: TextAlign.center,),
+                            ],
+                          ),
+                        );
+                      }else{
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          padding: EdgeInsets.only(bottom: h * 0.2, top: 20),
+                          itemCount: service.newScanned$.value.length,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 12,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        fixAssets$.value[service.newScanned$.value.values.toList()[index].masterassetid]?.name ?? '',
+                                        style: k14w500Black(color: kGrey900),
+                                      ),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        children: [
+                                          Text("${"Barcode".tr()}:",style: k14w400Black(color: kGrey500),),
+                                          SizedBox(width: 6,),
+                                          Text(service.newScanned$.value.values.toList()[index].barcode ?? '-', style: k14w500Black(color: kGrey500)),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        service.newScanned$.value.values.toList()[index].qty != null ? service.newScanned$.value.values.toList()[index].qty!.toString() : "",
+                                        style: k16w600Black(color: kPrimaryColor),
+                                      ),
+                                      SizedBox(
+                                        width: 8,
+                                      ),
+                                      InkWell(
+                                        onTap: () async {
+                                          var result = await showConfirmDialog("Delete".tr(), "Are you sure you want to delete this fixed asset?".tr(),
+                                              imagePath: "assets/images/error.svg", actionText: "Delete".tr());
+                                          if (result == true) {
+                                            service.newScanned$.value.remove(service.newScanned$.value.values.toList()[index].masterassetid);
+                                            service.newScanned$.add(service.newScanned$.value);
+                                          }
+                                        },
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: SvgPicture.asset("assets/images/delete.svg"),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          separatorBuilder: (context, index) => const Divider(
+                            height: 1,
+                            color: kBorderColor2,
+                          ),
+                        );
+                      }
+                    }
+                )
+              ],
             ),
-          ),
-          UnicornButton(
-            null,
-            null,
-            null,
-            hasLabel: true,
-            labelText: "${"Save Counting".tr()}${isOffline$.value ? " Offline" : ""}",
-            currentButton: FloatingActionButton(
-              heroTag: "upload2",
-              mini: true,
-              child: Icon(Icons.upload_rounded),
-              onPressed: () {
-                service.newScanned$.value.forEach((key, value) {});
-                showDialog(
-                  barrierDismissible: false,
-                  context: context,
-                  builder: (context) {
-                    isOffline$.value
-                        ? db
-                            .sendCountingDataOffline(
-                            newScannedItems: service.newScanned$.value.values.toList(),
-                          )
-                            .then((value) async {
-                            if (value == true) {
-                              await setLocalDataFunction();
-                              service.newScanned$.add({});
-                            }
-                            Navigator.pop(context);
-                          })
-                        : db.sendCountingDataOnline(newScannedItems: service.newScanned$.value.values, selectedCounting: service.selectedCounting$.value).then((value) async {
-                            if (value.success == true) {
-                              await setLocalDataFunction();
-                              service.newScanned$.add({});
-                            }
-                            Navigator.pop(context);
-                          });
-                    return Container(
-                      child: Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          )
-        ],
+          ],
+        ),
       ),
     );
   }

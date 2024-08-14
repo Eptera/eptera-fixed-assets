@@ -1,10 +1,4 @@
-import 'dart:convert';
-
-import 'package:fixed_assets_v3/Globals/GlobalFunctions.dart';
-import 'package:fixed_assets_v3/Globals/GlobalModels.dart';
-import 'package:fixed_assets_v3/Globals/GlobalVariables.dart';
-import 'package:fixed_assets_v3/Globals/index.dart';
-import 'package:fixed_assets_v3/Services/ApiModels.dart';
+import 'package:eptera_fixed_asset/Globals/index.dart';
 
 class Database {
   Future<String?> setDataFromOnline(List activeSelection) async {
@@ -219,12 +213,13 @@ class Database {
         }
       }).first;
 
-      if (showDialog) {
-        await showWarningDialog("Success".tr(), "Fixed Assets Inserted Successfully.".tr());
-      }
+      // if (showDialog) {
+      //   await showWarningDialog("Success".tr(), "Fixed Assets Inserted Successfully".tr());
+      // }
       return UpdateResponse(success: true);
     } on Exception catch (e) {
-      await showErrorDialog(e.toString());
+      // await showErrorDialog(e.toString());
+      print(e.toString());
       return UpdateResponse(success: false);
     }
   }
@@ -251,7 +246,7 @@ class Database {
       });
 
       if (requestObj.isEmpty) {
-        return UpdateResponse(success: false);
+        return UpdateResponse(success: false, message: "There is no fixed asset recorded in this counting".tr());
       }
 
       await api.execute({
@@ -267,14 +262,14 @@ class Database {
         }
       }).first;
 
-      if (showDialog) {
-        await showWarningDialog("Success".tr(), "Fixed Assets Inserted Successfully.".tr());
-      }
-      return UpdateResponse(success: true);
-    } on Exception catch (e) {
-      if (showDialog) {
-        await showErrorDialog(e.toString());
-      }
+      // if (showDialog) {
+      //   await showWarningDialog("Success".tr(), "Fixed Assets Inserted Successfully".tr());
+      // }
+      return UpdateResponse(success: true, message: "Fixed Assets Inserted Successfully".tr());
+    } catch (e) {
+      // if (showDialog) {
+      //   await showErrorDialog(e.toString());
+      // }
       return UpdateResponse(success: false, message: e.toString());
     }
   }
@@ -292,10 +287,6 @@ class Database {
 
       fixAssetCountDetailsFromHive.put('FixAssetCountDetailsFromHive', newFixAssetCountDetailsList);
 
-      Future.delayed(Duration.zero).then((value) async {
-        // await showWarningDialog("Success".tr(), "Fixed Assets Inserted Successfully.".tr());
-        await showWarningDialog("Success".tr(), "The offline count has been successfully saved to the offline count screen.".tr());
-      });
 
       return true;
     } on Exception catch (e) {
@@ -320,19 +311,13 @@ class Database {
         selectedLocation: selectedLocation,
         note: note,
       ));
-
       offlineLocationCountingItemsFromHive.put('OfflineLocationCountingItems', newOfflineLocationCountingItemList);
-
-      Future.delayed(Duration.zero).then((value) async {
-        // await showWarningDialog("Success".tr(), "Fixed Assets Inserted Successfully.".tr());
-
-        await showWarningDialog("Success".tr(), "The offline count has been successfully saved to the offline count screen.".tr());
-      });
       return true;
     } on Exception catch (e) {
-      Future.delayed(Duration.zero).then((value) async {
-        await showErrorDialog(e.toString());
-      });
+      // Future.delayed(Duration.zero).then((value) async {
+      //   await showErrorDialog(e.toString());
+      // });
+      print(e.toString());
       return false;
     }
   }

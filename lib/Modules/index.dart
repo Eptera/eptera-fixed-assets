@@ -9,3 +9,5 @@ export 'Counting_Location/Counting_LocationDetails.dart';
 export 'Counting/Counting.dart';
 export 'Counting/CountingService.dart';
 export 'Counting/CountingDetails.dart';
+
+export 'OfflineSummary/OfflineSummary.dart';

@@ -33,7 +33,7 @@ class TransferService {
           })
         }
       }).first;
-      if(response.dataSets![0][0]["SUCCESS"] == 1){
+      if(response.dataSets![0][0]["SUCCESS"] == true){
 
         fixedAssetItem$.value?.locId = to$.value?.id;
 
@@ -44,9 +44,6 @@ class TransferService {
       }else{
         return UpdateResponse(success: false, message: response.dataSets![0][0]["MESSAGE"]);
       }
-
-
-
     } on Exception catch (e) {
       return UpdateResponse(success: false);
     }

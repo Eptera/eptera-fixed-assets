@@ -2,27 +2,92 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'index.dart';
 
-Future<bool?> showConfirmDialog(BuildContext context, String title, String content) async {
+String? validate<T>(T? value) {
+  if (value == null || value is String && (value.isEmpty || value.trim().isEmpty)) {
+    return "Please don't leave this field empty".tr();
+  }
+  return null;
+}
+
+Future<bool?> showConfirmDialog(String title, String content, {String? actionText, String? imagePath, Color? buttonColor, Color? imageColor}) async {
   return await showDialog<bool>(
-    context: context,
+    context: currentContext,
     builder: (context) {
-      return AlertDialog(
-        title: Text(title),
-        content: Text(content),
-        actions: [
-          TextButton(
-            child: Text("Ok".tr()),
-            onPressed: () => Navigator.pop(context, true),
-          ),
-          TextButton(
-            child: Text("Cancel".tr()),
-            onPressed: () => Navigator.pop(context, false),
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          AlertDialog(
+            title: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (imagePath != null)
+                  SvgPicture.asset(
+                    imagePath,
+                  ),
+              ],
+            ),
+            titlePadding: EdgeInsets.only(left: 16, top: 20, right: 16),
+            contentPadding: EdgeInsets.only(left: 16, top: 20, bottom: 24, right: 16),
+            actionsPadding: EdgeInsets.only(left: 16, right: 16, bottom: 16),
+            insetPadding: EdgeInsets.only(left: 16, top: 16, right: 16, bottom: 32),
+            content: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: k18w600Black(color: Colors.grey[900]),
+                ),
+                SizedBox(
+                  height: 4,
+                ),
+                Text(
+                  content,
+                  style: k14w400Black(color: kGrey600),
+                ),
+              ],
+            ),
+            actions: [
+              Column(
+                children: [
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: ElevatedButton.styleFrom(
+                      primary: buttonColor ?? kPrimaryColor,
+                      side: BorderSide(color: buttonColor ?? kBorderColor),
+                    ),
+                    child: Text(
+                      actionText != null ? tr(actionText) : "Okey".tr(),
+                      style: k16w600Black(color: kWhite),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 8,
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: Text(
+                      "Cancel".tr(),
+                      style: k16w600Black(color: kGrey700),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      primary: kWhite,
+                      side: BorderSide(color: kBorderColor),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            ],
           ),
         ],
       );
     },
   );
 }
+
 
 Future<bool?> showDeleteConfirmDialog() async {
   return await showDialog<bool>(
@@ -173,7 +238,7 @@ Future<bool> makeFastTransfer(String barcode, FixAssetLocation? fromLocation, Fi
   );
 }
 
-List<FixAssetLocation> searchFixedAssetsLoaction(String pattern) {
+List<FixAssetLocation> searchFixedAssetsLocation(String pattern) {
   // ignore: missing_return
   var value = fixAssetsLocations$.value.values.toList().where((item) {
     if (item.name != null) {
@@ -186,47 +251,152 @@ List<FixAssetLocation> searchFixedAssetsLoaction(String pattern) {
 }
 
 Future<FixAssetLocation?> showSearchWidget_FixedAssetsLocationName() async {
-  return await showDialog<FixAssetLocation>(
-    barrierDismissible: false,
-    context: currentContext,
-    builder: (context) {
-      var search = TextEditingController(text: "");
-      BehaviorSubject<List<FixAssetLocation>> newList = BehaviorSubject.seeded(fixAssetsLocations$.value.values.toList());
+  return await showModalBottomSheet(
+      isDismissible: false,
+      context: currentContext,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (BuildContext searchFixAssetLocationContext) {
+        var search = TextEditingController(text: "");
+        BehaviorSubject<List<FixAssetLocation?>> newList$ = BehaviorSubject.seeded(fixAssetsLocations$.value.values.toList());
+        return DraggableScrollableSheet(
+            expand: false,
+            maxChildSize: 0.9,
+            minChildSize: 0.9,
+            initialChildSize: 0.9,
+            builder: (context, controller) {
+              return Stack(children: [
+                Container(
+                  decoration: const BoxDecoration(
+                    color: kWhite,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(35),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 32, left: 16, right: 16),
+                    child: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.start,
+                      runSpacing: 16,
+                      children: [
+                        Text(
+                          "Locations".tr(),
+                          style: k18w600Black(color: kGrey900),
+                        ),
+                        CTextFormField(
+                          hintText: "Search".tr(),
+                          controller: search,
+                          onChange: (value) {
+                            newList$.add(searchFixedAssetsLocation(value,));
+                          },
+                          textInputAction: TextInputAction.done,
+                          hasIcon: true,
+                          iconPath: "assets/images/search_logo.svg",
+                        ),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.7,
+                          child: SingleChildScrollView(
+                            child: StreamBuilder<List<FixAssetLocation?>?>(
+                                stream: newList$.stream,
+                                builder: (context, snapshot) {
+                                  if (newList$.value.isEmpty) {
+                                    return Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        child: Text(
+                                          "No location matching your search".tr(),
+                                          style: k14w400Black(color: kGrey600),
+                                          textAlign: TextAlign.center,
+                                        ));
+                                  }
+                                  return Column(
+                                    children: [
+                                      for (var i = 0; i < newList$.value.length; i++)
+                                        InkWell(
+                                            onTap: () {
+                                              Navigator.pop(context, newList$.value[i]);
+                                            },
+                                            child: Column(
+                                              children: [
+                                                SizedBox(
+                                                  height: 40,
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    children: [
+                                                      Text(
+                                                        newList$.value[i]?.name ?? '',
+                                                        style: k14w500Black(color: kGrey700),
+                                                        softWrap: true,
+                                                      ),
+                                                      SvgPicture.asset("assets/images/add_list.svg")
+                                                    ],
+                                                  ),
+                                                ),
+                                                Divider(
+                                                  color: kBorderColor2,
+                                                ),
+                                              ],
+                                            )),
+                                      const SizedBox(
+                                        height: 72,
+                                      )
+                                    ],
+                                  );
+                                }),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).padding.bottom > 0 ?  MediaQuery.of(context).padding.bottom : 32,
+                    ),
+                    child: Container(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Container(
+                            color: kWhite,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                const SizedBox(
+                                  height: 8,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      //selectedStock$.add(null);
+                                      //selectedStock$.add(selectedStock$.value);
+                                      Navigator.pop(context);
+                                    },
+                                    style: ElevatedButton.styleFrom(primary: kWhite, side: BorderSide(color: kBorderColor)),
+                                    child: Text(
+                                      "Cancel".tr(),
+                                      style: k16w600Black(color: kGrey700),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
 
-      return AlertDialog(
-        title: TextField(
-          controller: search,
-          decoration: InputDecoration(labelText: "Locations".tr()),
-          onChanged: (value) => newList.add(searchFixedAssetsLoaction(value)),
-        ),
-        content: StreamBuilder<List<FixAssetLocation>>(
-          stream: newList,
-          builder: (context, snapshot) => Container(
-            width: MediaQuery.of(context).size.width * 0.8,
-            child: ListView.separated(
-              itemCount: newList.value.length,
-              itemBuilder: (context, index) => ListTile(
-                title: Text(newList.value[index].name ?? ''),
-                onTap: () async => Navigator.pop(context, newList.value[index]),
-              ),
-              separatorBuilder: (context, index) => Divider(),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            child: Text(
-              "Close".tr(),
-              style: TextStyle(color: Colors.red),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      );
-    },
-  ).then((value) => value);
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ]);
+            });
+      }).then((value) {
+    print(value);
+
+    return value;
+  });
 }
 
 List<FixAsset> searchFixedAsset(String pattern) {
@@ -240,49 +410,152 @@ List<FixAsset> searchFixedAsset(String pattern) {
 
 //(item.barcode ?? " ").toLowerCase().contains(pattern.toLowerCase())
 Future<FixAsset?> showSearchWidget_FixedAssetName() async {
-  return await showDialog<FixAsset>(
-    barrierDismissible: false,
-    context: currentContext,
-    builder: (context) {
-      var search = TextEditingController(text: "");
-      BehaviorSubject<List<FixAsset>> newList = BehaviorSubject.seeded(fixAssets$.value.values.toList());
+  return await showModalBottomSheet(
+      isDismissible: false,
+      context: currentContext,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (BuildContext searchFixedAssetContext) {
+        var search = TextEditingController(text: "");
+        BehaviorSubject<List<FixAsset?>> newList$ = BehaviorSubject.seeded(fixAssets$.value.values.toList());
+        return DraggableScrollableSheet(
+            expand: false,
+            maxChildSize: 0.9,
+            minChildSize: 0.9,
+            initialChildSize: 0.9,
+            builder: (context, controller) {
+              return Stack(children: [
+                Container(
+                  decoration: const BoxDecoration(
+                    color: kWhite,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(35),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 32, left: 16, right: 16),
+                    child: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.start,
+                      runSpacing: 16,
+                      children: [
+                        Text(
+                          "Fixed Assets".tr(),
+                          style: k18w600Black(color: kGrey900),
+                        ),
+                        CTextFormField(
+                          hintText: "Search".tr(),
+                          controller: search,
+                          onChange: (value) {
+                            newList$.add(searchFixedAsset(value,));
+                          },
+                          textInputAction: TextInputAction.done,
+                          hasIcon: true,
+                          iconPath: "assets/images/search_logo.svg",
+                        ),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.7,
+                          child: SingleChildScrollView(
+                            child: StreamBuilder<List<FixAsset?>?>(
+                                stream: newList$.stream,
+                                builder: (context, snapshot) {
+                                  if (newList$.value.isEmpty) {
+                                    return Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        child: Text(
+                                          "No fixed asset matching your search".tr(),
+                                          style: k14w400Black(color: kGrey600),
+                                          textAlign: TextAlign.center,
+                                        ));
+                                  }
+                                  return Column(
+                                    children: [
+                                      for (var i = 0; i < newList$.value.length; i++)
+                                        InkWell(
+                                            onTap: () {
+                                              Navigator.pop(context, newList$.value[i]);
+                                            },
+                                            child: Column(
+                                              children: [
+                                                SizedBox(
+                                                  height: 40,
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    children: [
+                                                      Text(
+                                                        newList$.value[i]?.name ?? '',
+                                                        style: k14w500Black(color: kGrey700),
+                                                        softWrap: true,
+                                                      ),
+                                                      SvgPicture.asset("assets/images/add_list.svg")
+                                                    ],
+                                                  ),
+                                                ),
+                                                Divider(
+                                                  color: kBorderColor2,
+                                                ),
+                                              ],
+                                            )),
+                                      const SizedBox(
+                                        height: 72,
+                                      )
+                                    ],
+                                  );
+                                }),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).padding.bottom > 0 ?  MediaQuery.of(context).padding.bottom : 32,
+                    ),
+                    child: Container(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Container(
+                            color: kWhite,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                const SizedBox(
+                                  height: 8,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      //selectedStock$.add(null);
+                                      //selectedStock$.add(selectedStock$.value);
+                                      Navigator.pop(context);
+                                    },
+                                    style: ElevatedButton.styleFrom(primary: kWhite, side: BorderSide(color: kBorderColor)),
+                                    child: Text(
+                                      "Cancel".tr(),
+                                      style: k16w600Black(color: kGrey700),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
 
-      return AlertDialog(
-        title: TextField(
-          controller: search,
-          decoration: InputDecoration(labelText: "Fixed Assets".tr()),
-          onChanged: (value) => newList.add(searchFixedAsset(value)),
-        ),
-        content: StreamBuilder<List<FixAsset>>(
-          stream: newList,
-          builder: (context, snapshot) => Container(
-            width: MediaQuery.of(context).size.width * 0.8,
-            child: ListView.separated(
-              itemCount: newList.value.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(newList.value[index].name ?? "-"),
-                  onTap: () async => Navigator.pop(context, newList.value[index]),
-                );
-              },
-              separatorBuilder: (context, index) => Divider(),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            child: Text(
-              "Close".tr(),
-              style: TextStyle(color: Colors.red),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      );
-    },
-  ).then((value) => value);
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ]);
+            });
+      }).then((value) {
+    print(value);
+
+    return value;
+  });
 }
 
 Future<BarcodeItem?> showSearchWidget_FixedAssetBarcodes(List<BarcodeItem> newList) async {
@@ -334,47 +607,153 @@ List<ResponsibleStaff> searchResponsibleStaff(String pattern) {
 }
 
 Future<ResponsibleStaff?> showSearchWidget_ResponsibleStaffName() async {
-  return await showDialog<ResponsibleStaff>(
-    barrierDismissible: false,
-    context: currentContext,
-    builder: (context) {
-      var search = TextEditingController(text: "");
-      BehaviorSubject<List<ResponsibleStaff>> newList = BehaviorSubject.seeded(fixAssetsResponsibleStaff$.value.values.toList());
 
-      return AlertDialog(
-        title: TextField(
-          controller: search,
-          decoration: InputDecoration(labelText: "Responsible Staff".tr()),
-          onChanged: (value) => newList.add(searchResponsibleStaff(value)),
-        ),
-        content: StreamBuilder<List<ResponsibleStaff>>(
-          stream: newList,
-          builder: (context, snapshot) => Container(
-            width: MediaQuery.of(context).size.width * 0.8,
-            child: ListView.separated(
-              itemCount: newList.value.length,
-              itemBuilder: (context, index) => ListTile(
-                title: Text(newList.value[index].name ?? "-"),
-                onTap: () async => Navigator.pop(context, newList.value[index]),
-              ),
-              separatorBuilder: (context, index) => Divider(),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            child: Text(
-              "Close".tr(),
-              style: TextStyle(color: Colors.red),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      );
-    },
-  ).then((value) => value);
+  return await showModalBottomSheet(
+      isDismissible: false,
+      context: currentContext,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (BuildContext searchResponsibleStaffContext) {
+        var search = TextEditingController(text: "");
+        BehaviorSubject<List<ResponsibleStaff?>> newList$ = BehaviorSubject.seeded(fixAssetsResponsibleStaff$.value.values.toList());
+        return DraggableScrollableSheet(
+            expand: false,
+            maxChildSize: 0.9,
+            minChildSize: 0.9,
+            initialChildSize: 0.9,
+            builder: (context, controller) {
+              return Stack(children: [
+                Container(
+                  decoration: const BoxDecoration(
+                    color: kWhite,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(35),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 32, left: 16, right: 16),
+                    child: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.start,
+                      runSpacing: 16,
+                      children: [
+                        Text(
+                          "Responsible Staffs".tr(),
+                          style: k18w600Black(color: kGrey900),
+                        ),
+                        CTextFormField(
+                          hintText: "Search".tr(),
+                          controller: search,
+                          onChange: (value) {
+                            newList$.add(searchResponsibleStaff(value,));
+                          },
+                          textInputAction: TextInputAction.done,
+                          hasIcon: true,
+                          iconPath: "assets/images/search_logo.svg",
+                        ),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.7,
+                          child: SingleChildScrollView(
+                            child: StreamBuilder<List<ResponsibleStaff?>?>(
+                                stream: newList$.stream,
+                                builder: (context, snapshot) {
+                                  if (newList$.value.isEmpty) {
+                                    return Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        child: Text(
+                                          "No staff matching your search".tr(),
+                                          style: k14w400Black(color: kGrey600),
+                                          textAlign: TextAlign.center,
+                                        ));
+                                  }
+                                  return Column(
+                                    children: [
+                                      for (var i = 0; i < newList$.value.length; i++)
+                                        InkWell(
+                                            onTap: () {
+                                              Navigator.pop(context, newList$.value[i]);
+                                            },
+                                            child: Column(
+                                              children: [
+                                                SizedBox(
+                                                  height: 40,
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    children: [
+                                                      Text(
+                                                        newList$.value[i]?.name ?? '',
+                                                        style: k14w500Black(color: kGrey700),
+                                                        softWrap: true,
+                                                      ),
+                                                      SvgPicture.asset("assets/images/add_list.svg")
+                                                    ],
+                                                  ),
+                                                ),
+                                                Divider(
+                                                  color: kBorderColor2,
+                                                ),
+                                              ],
+                                            )),
+                                      const SizedBox(
+                                        height: 72,
+                                      )
+                                    ],
+                                  );
+                                }),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).padding.bottom > 0 ?  MediaQuery.of(context).padding.bottom : 32,
+                    ),
+                    child: Container(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Container(
+                            color: kWhite,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                const SizedBox(
+                                  height: 8,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      //selectedStock$.add(null);
+                                      //selectedStock$.add(selectedStock$.value);
+                                      Navigator.pop(context);
+                                    },
+                                    style: ElevatedButton.styleFrom(primary: kWhite, side: BorderSide(color: kBorderColor)),
+                                    child: Text(
+                                      "Cancel".tr(),
+                                      style: k16w600Black(color: kGrey700),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ]);
+            });
+      }).then((value) {
+    print(value);
+
+    return value;
+  });
 }
 
 Future<FixAssetCount?> showWidget_CountingMasterbyName(BuildContext context, String title, List<FixAssetCount> list) async {
@@ -382,41 +761,114 @@ Future<FixAssetCount?> showWidget_CountingMasterbyName(BuildContext context, Str
     barrierDismissible: false,
     context: context,
     builder: (context) {
-      return AlertDialog(
-        title: Text(title),
-        content: Container(
-          width: MediaQuery.of(context).size.width * 0.8,
-          child: ListView.separated(
-            itemCount: list.length,
-            itemBuilder: (context, index) {
-              return ListTile(
-                title: Text(branches$.value[list[index].branchid]?.name == null ? '' : branches$.value[list[index].branchid]!.name!),
-                subtitle: Row(
-                  children: [
-                    if (list[index].periodstart != null) Expanded(child: Center(child: Text(DateFormat('yyyy/MM/dd').format(list[index].periodstart!)))),
-                    if (list[index].periodstart != null) const Icon(Icons.arrow_forward_rounded),
-                    if (list[index].periodend != null) Expanded(child: Center(child: Text(DateFormat('yyyy/MM/dd').format(list[index].periodend!)))),
-                  ],
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          AlertDialog(
+            title: Text(title,style: k18w600Black(color: kGrey900),),
+            titlePadding: const EdgeInsets.only(left: 16, top: 20, right: 16),
+            contentPadding: const EdgeInsets.only(left: 16, top: 20, bottom: 24, right: 16),
+            actionsPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+            insetPadding: const EdgeInsets.only(left: 16, top: 16, right: 16, bottom: 32),
+            content: SizedBox(
+              width: MediaQuery.of(context).size.width - 32,
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: list.length,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: kGrey50,
+                        border: Border.all(color: kBorderColor2),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0x0C101828),
+                            blurRadius: 1.64,
+                            offset: Offset(0, 0.82),
+                            spreadRadius: 0,
+                          )
+                        ],
+                      ),
+                      child: ListTile(
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12,vertical: 8),
+                        title: Text(branches$.value[list[index].branchid]?.name == null ? '' : branches$.value[list[index].branchid]!.name!),
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: SizedBox(
+                            width: MediaQuery.of(context).size.width - 32,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                    decoration: BoxDecoration(color: kWhite, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFFECDC9))),
+                                    child: Text(
+                                      list[index].periodstart == null ? " " : DateFormat("yyyy/MM/dd").format(list[index].periodstart!),
+                                      style: k14w500Black(
+                                        color: const Color(0xFFB32218),
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 8,
+                                ),
+                                Icon(
+                                  Icons.arrow_forward,
+                                  color: Color(0xFF17B26A),
+                                  size: 16,
+                                ),
+                                SizedBox(
+                                  width: 8,
+                                ),
+                                Expanded(
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                    decoration: BoxDecoration(color: kWhite, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFAAEFC6))),
+                                    child: Text(
+                                      list[index].periodend == null ? " " : DateFormat("yyyy/MM/dd").format(list[index].periodend!),
+                                      style: k14w500Black(
+                                        color: const Color(0xFF067647),
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
+                        onTap: () async {
+                          Navigator.pop(context, list[index]);
+                        },
+                      ),
+                    );
+                  },
+                  separatorBuilder: (context, index) {
+                    return const Divider(color: kBorderColor2,);
+                  },
                 ),
-                onTap: () async {
-                  Navigator.pop(context, list[index]);
-                },
-              );
-            },
-            separatorBuilder: (context, index) {
-              return const Divider();
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            child: Text(
-              "Close".tr(),
-              style: const TextStyle(color: Colors.red),
+              ),
             ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(primary: kWhite, side: const BorderSide(color: kBorderColor)),
+                child: Text(
+                  "Cancel".tr(),
+                  style: k16w600Black(color: kGrey700),
+                ),
+              ),
+            ],
           ),
         ],
       );

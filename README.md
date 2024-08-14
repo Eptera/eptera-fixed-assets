@@ -1,4 +1,4 @@
-# fixed_assets_v3
+# Eptera Fixed Asset
 
 A new Flutter project.
 

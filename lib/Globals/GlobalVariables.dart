@@ -1,14 +1,13 @@
+
 import 'dart:math';
-import 'package:fixed_assets_v3/Services/Database.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
-import 'package:soundpool/soundpool.dart';
+
 import 'index.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 late PackageInfo packageInfo;
 late BuildContext currentContext;
 late LoginResponse loginResponse;
+late BehaviorSubject<String> selectedLang$;
 
 //Hive
 late Box<Map?> fixAssetsFromHive;
@@ -68,3 +67,31 @@ var colors = [
   Color(0xff6e7897),
   Color(0xff7f9172)
 ];
+
+// Banner
+Flushbar kShowBanner(BannerType bannerType, String text, String? subText, BuildContext context, {int? durationSeconds, Function()? onDismissed, Color? color, FlushbarPosition? flushbarPosition}) {
+  switch (bannerType) {
+    case BannerType.ERROR:
+      return DefaultNotificationBanner(
+        iconPath: 'assets/images/error.svg',
+        text: text,
+        subText: subText ?? "",
+        context: context,
+        color: color ?? kWhite,
+        durationSeconds: durationSeconds,
+        flushbarPosition: flushbarPosition ?? FlushbarPosition.BOTTOM,
+      ).show();
+
+    case BannerType.SUCCESS:
+      return DefaultNotificationBanner(
+        iconPath: 'assets/images/success.svg',
+        text: text,
+        subText: subText ?? "",
+        context: context,
+        color: color ?? kWhite,
+        durationSeconds: durationSeconds,
+        flushbarPosition: flushbarPosition ?? FlushbarPosition.BOTTOM,
+      ).show();
+  }
+}
+

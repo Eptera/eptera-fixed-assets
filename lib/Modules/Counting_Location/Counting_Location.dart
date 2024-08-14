@@ -1,7 +1,11 @@
+import 'package:flutter/services.dart';
+
 import '../../Globals/index.dart';
 import 'package:flutter/material.dart';
 
 class Counting_Location extends StatefulWidget {
+  const Counting_Location({super.key});
+
   @override
   _Counting_LocationState createState() => _Counting_LocationState();
 }
@@ -16,7 +20,7 @@ class _Counting_LocationState extends State<Counting_Location> {
   late StreamSubscription barcodeListener;
   bool firstRun = true;
 
-  List<FixAssetLocation> searchFixedAssetsLoaction(String pattern) {
+  List<FixAssetLocation> searchFixedAssetsLocation(String pattern) {
     var value = searchingList.where((item) {
       if (item.name == null) {
         return false;
@@ -34,6 +38,11 @@ class _Counting_LocationState extends State<Counting_Location> {
 
   @override
   void initState() {
+
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: kWhite,
+    ));
+
     for (var i = 0; i < fixAssets_byLocation$.value.keys.toList().length; i++) {
       if (fixAssets_byLocation$.value[fixAssets_byLocation$.value.keys.toList()[i]] != null &&
           fixAssets_byLocation$.value[fixAssets_byLocation$.value.keys.toList()[i]]!.isNotEmpty) {
@@ -100,136 +109,95 @@ class _Counting_LocationState extends State<Counting_Location> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Location Counting".tr()),
+        centerTitle: true,
+        title: SvgPicture.asset("assets/images/appbarLogo.svg"),
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: const Icon(
+              Icons.arrow_back,
+              color: kGrey700,
+            )),
       ),
-      body: Container(
+      body: SizedBox(
         width: w,
         height: h,
-        child: Column(
-          children: [
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-              child: TextFormField(
-                onChanged: (value) {
-                  if (value == "") {
-                    setState(() {
-                      searchingList = allList;
-                      return;
-                    });
-                  }
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 20,),
+              Text("Location Counting".tr(),style: k24w600Black(color: kGrey900),),
+              SizedBox(height: 16,),
+              CTextFormField(
+                hintText: "Search Location".tr(),
+                textInputAction: TextInputAction.done, onChange: (value) {
+                if (value == "") {
                   setState(() {
-                    searchingList = searchFixedAssetsLoaction(value);
+                    searchingList = allList;
+                    return;
                   });
-                },
-                decoration: InputDecoration(
-                  hintText: "Search Location".tr(),
-                  errorStyle: TextStyle(height: 0),
-                  counterText: '',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(9),
-                    ),
-                    borderSide: BorderSide(color: Colors.black, width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(9),
-                    ),
-                    borderSide: BorderSide(color: Colors.black, width: 1),
-                  ),
-                  contentPadding: EdgeInsets.only(left: 10),
-                ),
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                child: Column(
-                  children: [
-                    SizedBox(height: 10),
-                    for (var i = 0; i < searchingList.length; i++)
-                      InkWell(
-                        onTap: () {
-                          {
-                            barcodeListener.pause();
+                }
+                setState(() {
+                  searchingList = searchFixedAssetsLocation(value);
+                });
+              },hasIcon: true, iconPath: "assets/images/search_logo.svg",),
+              SizedBox(height: 20,),
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < searchingList.length; i++)
+                        InkWell(
+                          onTap: () {
+                            {
+                              barcodeListener.pause();
 
-                            GetIt.I<Counting_LocationService>().selectedLocation$.add(allList.firstWhere((element) => element.id == searchingList[i].id));
+                              GetIt.I<Counting_LocationService>().selectedLocation$.add(allList.firstWhere((element) => element.id == searchingList[i].id));
 
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => Counting_LocationDetails(),
-                                )).then((value) {
-                              currentContext = context;
-                              barcodeListener.resume();
-                            });
-                          }
-                        },
-                        child: Container(
-                            width: w,
-                            padding: EdgeInsets.only(
-                              left: 10,
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => Counting_LocationDetails(),
+                                  )).then((value) {
+                                currentContext = context;
+                                barcodeListener.resume();
+                              });
+                            }
+                          },
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              border: Border(bottom: BorderSide(color: kBorderColor2))
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 16),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Divider(height: 1),
-                                SizedBox(height: 10),
                                 Text(
                                   searchingList[i].name ?? "",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w400,
-                                    fontSize: 16,
-                                  ),
+                                  style: k14w500Black(color: kGrey700),
                                   overflow: TextOverflow.ellipsis,
                                   maxLines: 3,
                                 ),
-                                SizedBox(height: 10),
-                                Divider(height: 1),
+                                SvgPicture.asset("assets/images/arrow_right.svg")
                               ],
-                            )),
-                      ),
-                    SizedBox(
-                      height: padding.bottom + 10,
-                    )
-                  ],
+                            ),
+                          ),
+                        ),
+                      SizedBox(
+                        height: padding.bottom + (h * 0.1),
+                      )
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-      // body: ListView.separated(
-      //   itemBuilder: (context, index) => ListTile(
-      //     title: Text(fixAssetsLocations$
-      //             .value[fixAssets_byLocation$.value.keys.toList()[index]]
-      //             .name ??
-      //         "-"),
-      //     minVerticalPadding: 0,
-      //     onTap: () {
-      //       if (fixAssets_byLocation$
-      //               .value[fixAssets_byLocation$.value.keys.toList()[index]]
-      //               .length >
-      //           0) {
-      //         print(fixAssetsLocations$
-      //             .value[fixAssets_byLocation$.value.keys.toList()[index]]
-      //             .name);
-      //         GetIt.I<Counting_LocationService>().selectedLocation$.add(
-      //             fixAssetsLocations$
-      //                 .value[fixAssets_byLocation$.value.keys.toList()[index]]);
-      //         Navigator.push(
-      //             context,
-      //             MaterialPageRoute(
-      //               builder: (context) => Counting_LocationDetails(),
-      //             )).then((value) => currentContext = context);
-      //       }
-      //     },
-      //   ),
-      //   separatorBuilder: (context, index) => Divider(
-      //     height: 1,
-      //   ),
-      //   itemCount: fixAssets_byLocation$.value.length,
-      // ),
     );
   }
 }

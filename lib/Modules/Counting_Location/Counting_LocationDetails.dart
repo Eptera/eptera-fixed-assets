@@ -1,3 +1,5 @@
+import 'package:flutter/services.dart';
+
 import '../../Globals/index.dart';
 import 'package:flutter/material.dart';
 
@@ -15,6 +17,11 @@ class _Counting_LocationDetailsState extends State<Counting_LocationDetails> {
   @override
   void initState() {
     super.initState();
+
+    SystemChrome.setSystemUIOverlayStyle( SystemUiOverlayStyle(
+      statusBarColor: kWhite,
+    ));
+
     service.currentList$.value = {};
 
     if (fixAssets_byLocation$.value[service.selectedLocation$.value?.id] != null) {
@@ -54,28 +61,28 @@ class _Counting_LocationDetailsState extends State<Counting_LocationDetails> {
               if (approved) {
                 if (fixAssetsLocations$.value[fixAssets_byBarcode$.value[barcode]!.barkodeList?[barcode]?.locationId]?.id != null && service.selectedLocation$.value?.id != null) {
                   await showLoadingDialog(GetIt.I<TransferService>().fastTransfer(
-                     fixAssets_byBarcode$.value[barcode]!,
-                     fixAssetsLocations$.value[fixAssets_byBarcode$.value[barcode]!.barkodeList![barcode]!.locationId]!.id!,
-                     service.selectedLocation$.value!.id!,
-                   )).then((value) {
-                     if(value.success!){
-                       fixAssets_byLocation$.value[fixAssets_byBarcode$.value[barcode]!.barkodeList![barcode]!.locationId]!.removeWhere((e) => e.barcode == barcode);
-                       fixAssets_byLocation$.value[service.selectedLocation$.value!.id]!.add(fixAssets_byBarcode$.value[barcode]!);
-                       fixAssets$.value[fixAssets_byBarcode$.value[barcode]!.id]!.barkodeList![barcode]!.locationId = service.selectedLocation$.value!.id;
-                       fixAssets_byBarcode$.value[barcode]!.barkodeList![barcode]!.locationId = service.selectedLocation$.value!.id;
-                       approved = true;
+                    fixAssets_byBarcode$.value[barcode]!,
+                    fixAssetsLocations$.value[fixAssets_byBarcode$.value[barcode]!.barkodeList![barcode]!.locationId]!.id!,
+                    service.selectedLocation$.value!.id!,
+                  )).then((value) {
+                    if (value.success!) {
+                      fixAssets_byLocation$.value[fixAssets_byBarcode$.value[barcode]!.barkodeList![barcode]!.locationId]!.removeWhere((e) => e.barcode == barcode);
+                      fixAssets_byLocation$.value[service.selectedLocation$.value!.id]!.add(fixAssets_byBarcode$.value[barcode]!);
+                      fixAssets$.value[fixAssets_byBarcode$.value[barcode]!.id]!.barkodeList![barcode]!.locationId = service.selectedLocation$.value!.id;
+                      fixAssets_byBarcode$.value[barcode]!.barkodeList![barcode]!.locationId = service.selectedLocation$.value!.id;
+                      approved = true;
 
-                       var oldList = service.currentList$.value;
-                       service.currentList$.value = {};
+                      var oldList = service.currentList$.value;
+                      service.currentList$.value = {};
 
-                       fixAssets_byLocation$.value[service.selectedLocation$.value!.id]!.forEach((e) {
-                         if (service.currentList$.value[e.barcodeID] == null && e.barcodeID != null) service.currentList$.value[e.barcodeID!] = oldList[e.barcodeID!] ?? false;
-                       });
-                       showWarningDialog(value.message ?? "Success".tr(), "Transaction Inserted Successfully".tr());
-                     }else{
-                       showErrorDialog(value.message);
-                     }
-                   });
+                      fixAssets_byLocation$.value[service.selectedLocation$.value!.id]!.forEach((e) {
+                        if (service.currentList$.value[e.barcodeID] == null && e.barcodeID != null) service.currentList$.value[e.barcodeID!] = oldList[e.barcodeID!] ?? false;
+                      });
+                      kShowBanner(BannerType.SUCCESS, "Success".tr(), "Transaction inserted successfully".tr(), context);
+                    } else {
+                      kShowBanner(BannerType.ERROR, "Error".tr(), value.message ?? "An error occurred while inserting the transaction".tr(), context);
+                    }
+                  });
                 }
               }
             }
@@ -83,10 +90,9 @@ class _Counting_LocationDetailsState extends State<Counting_LocationDetails> {
               service.currentList$.add(service.currentList$.value);
               if (service.currentList$.value.containsKey(fixAssets_byBarcode$.value[barcode]?.barcodeID)) {
                 service.currentList$.value[fixAssets_byBarcode$.value[barcode]!.barcodeID!] = true;
-
                 service.currentList$.add(service.currentList$.value);
               } else {
-                showErrorDialog("This Item doesn't exist in this location".tr());
+                kShowBanner(BannerType.ERROR, "Error".tr(),"This Item doesn't exist in this location".tr(), context);
               }
             }
           }
@@ -109,163 +115,208 @@ class _Counting_LocationDetailsState extends State<Counting_LocationDetails> {
     var w = MediaQuery.of(context).size.width;
     var h = MediaQuery.of(context).size.height;
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        title: Text(
-          service.selectedLocation$.value?.name ?? "",
-          overflow: TextOverflow.ellipsis,
-          maxLines: 2,
-        ),
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: const Icon(
+              Icons.arrow_back,
+              color: kGrey700,
+            )),
         actions: [
           if (cameraModeIsActive$.value == true)
             IconButton(
-              icon: const Icon(Icons.camera_alt_rounded),
+              icon: SvgPicture.asset("assets/images/camera.svg"),
               onPressed: () async {
                 var barcode = await scanner.scanBarcodeNormal();
                 lastBarcode$.add(barcode);
               },
             ),
+          IconButton(
+              onPressed: () async {
+                FocusScope.of(context).unfocus();
+            await showDialog(
+              context: context,
+              builder: (context) {
+                isOffline$.value
+                    ? db
+                    .sendLocationCountingDataOffline(
+                  currentList: service.currentList$.value,
+                  selectedLocation: service.selectedLocation$.value,
+                  note: service.note$.value,
+                )
+                    .then((v) {
+                        Navigator.pop(context);
+                      if(v == true){
+                        Future.delayed(Duration.zero).then((value) async {
+                          kShowBanner(BannerType.SUCCESS, "Success".tr(), "The offline count has been successfully saved to the offline count screen.".tr(), context);
+                        });
+                      }else{
+                        kShowBanner(BannerType.ERROR, "Error".tr(), "An error occurred while saving the offline count".tr(), context);
+                      }
+                })
+                    : db
+                    .sendLocationCountingDataOnline(
+                  currentList: service.currentList$.value,
+                  selectedLocation: service.selectedLocation$.value,
+                  note: service.note$.value,
+                )
+                    .then((v) {
+                  Navigator.pop(context);
+                      if(v.success == true){
+                        kShowBanner(BannerType.SUCCESS, "Success".tr(), "Fixed Assets Inserted Successfully".tr(), context);
+                      }else{
+                        kShowBanner(BannerType.ERROR, "Error".tr(), v.message ?? "An error occurred while inserting the transaction".tr(), context);
+                      }
+                });
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              },
+            );
+          }, icon: SvgPicture.asset("assets/images/save.svg"))
         ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsets.all(10),
-              child: TextField(
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: "Counting Note".tr(),
-                ),
-                onChanged: (value) {
-                  service.note$.value = value;
-                },
+        bottom: PreferredSize(
+          preferredSize: Size(w, 80),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Location Counting".tr(),
+                    style: k16w400Black(color: kGrey600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    service.selectedLocation$.value?.name ?? "",
+                    style: k20w600Black(color: kGrey900),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                  ),
+                  SizedBox(
+                    height: 20,
+                  )
+                ],
               ),
             ),
-            StreamBuilder(
-                stream: Rx.combineLatest3(service.currentList$.stream, fixAssets_byBarcodeID$.stream, fixAssets_byBarcode$.stream, (a, b, c) => null),
-                builder: (context, snapshot) {
-                  return ListView.separated(
-                    padding: EdgeInsets.only(bottom: 90),
-                    itemCount: service.currentList$.value.length,
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) => ListTile(
-                      title: Text(fixAssets_byBarcodeID$.value[service.currentList$.value.keys.toList()[index]]?.name ?? '-'),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(fixAssets_byBarcodeID$.value[service.currentList$.value.keys.toList()[index]]?.barcode != null
-                              ? "${"Barcode".tr()} : ${fixAssets_byBarcodeID$.value[service.currentList$.value.keys.toList()[index]]!.barcode}"
-                              : "${"Barcode ID".tr()} : ${fixAssets_byBarcodeID$.value[service.currentList$.value.keys.toList()[index]]!.barcodeID}"),
-                          (fixAssets_byBarcodeID$.value[service.currentList$.value.keys.toList()[index]]?.readingDate != null &&
-                                  (!service.currentList$.value.values.toList()[index]))
-                              ? Text(
-                                  "${"Last Scanned Date".tr()} : ${DateFormat("yyyy-MM-dd HH:mm").format(fixAssets_byBarcodeID$.value[service.currentList$.value.keys.toList()[index]]!.readingDate!)}")
-                              : Text(
-                                  "${"Last Scanned Date".tr()} : ",
-                                  style: TextStyle(color: Colors.transparent),
-                                )
-                        ],
-                      ),
-                      trailing: InkWell(
-                        onTap: () {
-                          // setState(() {
-                          service.currentList$.value[service.currentList$.value.keys.toList()[index]] = !service.currentList$.value.values.toList()[index];
-                          service.currentList$.add(service.currentList$.value);
-                          // });
-                        },
-                        child: Padding(
-                          padding: EdgeInsets.all(10),
-                          child: service.currentList$.value.values.toList()[index]
-                              ? Icon(
-                                  Icons.check_circle,
-                                  color: Colors.greenAccent,
-                                  size: w / 10,
-                                )
-                              : fixAssets_byBarcodeID$.value[service.currentList$.value.keys.toList()[index]]?.readingDate != null
-                                  ? Container(
-                                      width: w / 10,
-                                      height: w / 10,
-                                      decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: Colors.green,
+          ),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(
+              height: 20,
+            ),
+            CTextFormField(
+              hintText: "Enter counting note here".tr(),
+              textInputAction: TextInputAction.done,
+              onChange: (value) {
+                service.note$.value = value;
+              },
+              hasIcon: true,
+              iconPath: "assets/images/note.svg",
+            ),
+            SingleChildScrollView(
+              child: StreamBuilder(
+                  stream: Rx.combineLatest3(service.currentList$.stream, fixAssets_byBarcodeID$.stream, fixAssets_byBarcode$.stream, (a, b, c) => null),
+                  builder: (context, snapshot) {
+                    return ListView.separated(
+                      padding: EdgeInsets.only(top: 16, bottom: h * 0.2),
+                      itemCount: service.currentList$.value.length,
+                      shrinkWrap: true,
+                      itemBuilder: (context, index) => Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  fixAssets_byBarcodeID$.value[service.currentList$.value.keys.toList()[index]]?.name ?? '-',
+                                  style: k14w500Black(color: kGrey900),
+                                ),
+                                fixAssets_byBarcodeID$.value[service.currentList$.value.keys.toList()[index]]?.barcode != null
+                                    ? Row(
+                                        children: [
+                                          Text(
+                                            "${"Barcode".tr()}:",
+                                            style: k14w400Black(color: kGrey700),
                                           ),
-                                          color: Colors.green[50]),
-                                    )
-                                  : Icon(
-                                      Icons.remove_circle_outline,
-                                      color: Colors.redAccent,
-                                      size: w / 10,
-                                    ),
+                                          const SizedBox(
+                                            width: 6,
+                                          ),
+                                          Text(
+                                            "${fixAssets_byBarcodeID$.value[service.currentList$.value.keys.toList()[index]]!.barcode}",
+                                            style: k14w500Black(color: kGrey700),
+                                          )
+                                        ],
+                                      )
+                                    : Row(
+                                        children: [
+                                          Text(
+                                            "${"Barcode ID".tr()}:",
+                                            style: k14w400Black(color: kGrey700),
+                                          ),
+                                          const SizedBox(
+                                            width: 6,
+                                          ),
+                                          Text(
+                                            "${fixAssets_byBarcodeID$.value[service.currentList$.value.keys.toList()[index]]!.barcodeID}",
+                                            style: k14w500Black(color: kGrey700),
+                                          )
+                                        ],
+                                      ),
+                                (fixAssets_byBarcodeID$.value[service.currentList$.value.keys.toList()[index]]?.readingDate != null && (!service.currentList$.value.values.toList()[index]))
+                                    ? Row(
+                                        children: [
+                                          Text(
+                                            "${"Last Scanned Date".tr()}:",
+                                            style: k14w400Black(color: kGrey700),
+                                          ),
+                                          const SizedBox(
+                                            width: 6,
+                                          ),
+                                          Text(
+                                            DateFormat("yyyy/MM/dd HH:mm").format(fixAssets_byBarcodeID$.value[service.currentList$.value.keys.toList()[index]]!.readingDate!),
+                                            style: k14w400Black(color: kGrey700),
+                                          ),
+                                        ],
+                                      )
+                                    : Text(
+                                        "${"Last Scanned Date".tr()}:",
+                                        style: k14w400Black(color: Colors.transparent),
+                                      ),
+                              ],
+                            ),
+                            InkWell(
+                              onTap: () {
+                                service.currentList$.value[service.currentList$.value.keys.toList()[index]] = !service.currentList$.value.values.toList()[index];
+                                service.currentList$.add(service.currentList$.value);
+                              },
+                              child: service.currentList$.value.values.toList()[index]
+                                  ? SvgPicture.asset("assets/images/scanned_now.svg")
+                                  : fixAssets_byBarcodeID$.value[service.currentList$.value.keys.toList()[index]]?.readingDate != null
+                                      ? SvgPicture.asset("assets/images/scanned_before.svg")
+                                      : SvgPicture.asset("assets/images/not_scanned.svg"),
+                            )
+                          ],
                         ),
                       ),
-                      contentPadding: EdgeInsets.only(left: 10, right: 0),
-                      minVerticalPadding: 0,
-                      onTap: null,
-                    ),
-                    separatorBuilder: (context, index) => Divider(height: 1),
-                  );
-                }),
-            SizedBox(
-              height: h * 0.1,
+                      separatorBuilder: (context, index) => const Divider(color: kBorderColor2),
+                    );
+                  }),
             ),
           ],
         ),
-      ),
-      floatingActionButton: UnicornDialer(
-        finalButtonIcon: Icon(Icons.clear),
-        parentButton: Icon(Icons.menu),
-        parentButtonBackground: Colors.blueGrey,
-        hasBackground: true,
-        backgroundColor: Colors.black12,
-        orientation: 1,
-        childPadding: 20,
-        childButtons: [
-          UnicornButton(
-            null,
-            null,
-            null,
-            hasLabel: true,
-            labelText: "${"Save Counting".tr()}${isOffline$.value ? " Offline" : ""}",
-            currentButton: FloatingActionButton(
-              heroTag: "upload2",
-              mini: true,
-              child: Icon(Icons.upload_rounded),
-              onPressed: () async {
-                await showDialog(
-                  context: context,
-                  builder: (context) {
-                    isOffline$.value
-                        ? db
-                            .sendLocationCountingDataOffline(
-                            currentList: service.currentList$.value,
-                            selectedLocation: service.selectedLocation$.value,
-                            note: service.note$.value,
-                          )
-                            .then((v) {
-                            Navigator.pop(context);
-                          })
-                        : db
-                            .sendLocationCountingDataOnline(
-                            currentList: service.currentList$.value,
-                            selectedLocation: service.selectedLocation$.value,
-                            note: service.note$.value,
-                          )
-                            .then((v) {
-                            Navigator.pop(context);
-                          });
-                    return Container(
-                      child: Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          )
-        ],
       ),
     );
   }

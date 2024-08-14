@@ -1,4 +1,30 @@
 {
+  "Usercode": "Kullanıcı Kodu",
+  "Forgot Password?": "Şifremi Unuttum",
+  "Language Settings": "Dil Ayarları",
+  "EndPoint (Optional)": "EndPoint (Opsiyonel)",
+  "EndPoint": "EndPoint",
+  "LOGOUT_DIALOG_TEXT": "Çıkış yapmak istediğinize emin misiniz?",
+  "Okey": "Tamam",
+  "No fixed asset matching your search": "Aramanızla eşleşen demirbaş bulunamadı",
+  "Responsible Staffs": "Sorumlu Personeller",
+  "No staff matching your search": "Aramanızla eşleşen personel bulunamadı",
+  "No location matching your search": "Aramanızla eşleşen lokasyon bulunamadı",
+  "Transfer Time": "Transfer Zamanı",
+  "Search": "Ara",
+  "An error occurred while inserting the transaction": "İşlem tamamlanırken bir hata oluştu",
+  "Enter counting note here": "Sayım notu giriniz",
+  "Select Location": "Lokasyon Seç",
+  "Are you sure you want to delete this fixed asset?": "Bu demirbaşı silmek istediğinizden emin misiniz?",
+  "Delete": "Sil",
+  "DONE_COUNTING_TEXT": "[]/{} Tamamlandı",
+  "An error occurred while saving the offline count": "Çevrimdışı sayım kaydedilirken bir hata oluştu",
+  "There is no fixed asset recorded in this counting": "Bu sayımda okutulan yeni bir demirbaş yok",
+  "Offline Mode": "Çevrimdışı Mod",
+  "You can add fixed assets from the menu icon, by scanning the barcode or by selecting the asset from the list": "Menü ikonundan barkod okutarak ya da listeden demirbaş seçerek sayıma ekleme yapabilirsiniz",
+
+
+
   "Please don't leave this field empty": "Lütfen bu alanı boş bırakmayınız.",
   "Wrong information": "Yanlış bilgi.",
   "OK": "Tamam",
@@ -93,7 +119,7 @@
   "NoLicense": "Bu uygulamayı kullanmak için lisansınız yok. Uygulamayı kullanmak için lütfen destek ile iletişime geçiniz.\n\n+90 850 777 0 444",
   "\nDo you want to connect this barcode with a Stock Item now?": "\nBarkodu şimdi tanımlamak ister misiniz?",
   "Add By Barcode": "Barkodlu Giriş",
-  "Add By Stock Name": "Stok İle Giriş",
+  "Add By Fixed Asset Name": "Demirbaş İsmi İle Giriş",
   "Add Item": "Stok Ekle",
   "Barcode doesn't exist, Please select Stock to define it's barcode.": "Barcode bulunamadı, Lütfen barkodu tanımlamak için stok seçiniz.",
   "Branch / Entry Store": "Şube / Giriş Deposu",
@@ -116,7 +142,7 @@
   "New Transfer": "Yeni Transfer ",
   "No Data Found!": "Kayıt Bulunamadı!",
   "No Internet Connection!": "Internet Bağlantısı Yok!",
-  "No Internet Found please fix you're connection and try again.": "Internet bağlantısı bulunamadı, lütfen internet bağlantınızı kontrol ettikten sonra tekrar deneyiniz.",
+  "No Internet Found please fix you're connection and try again": "Internet bağlantısı bulunamadı, lütfen internet bağlantınızı kontrol ettikten sonra tekrar deneyiniz.",
   "No Items Found!": "Stok Bulunamadı!",
   "No Stock assigned to this barcode": "Bu barkod stok sisteminde bulunamadı",
   "No device selected.": "Bluetooth yazıcı seçilmelidir",
@@ -166,7 +192,7 @@
   "From": "Nereden",
   "To": "Nereye",
   "Submit": "Gönder",
-  "Fixed Assets": "Demirbaş",
+  "Fixed Assets": "Demirbaşlar",
   "Scanner": "Tarayıcı",
   "Camera": "Kamera",
   "Fixed assets Transfer": "Demirbaş Transferi",
@@ -181,6 +207,6 @@
   "Approve Transfer": "Transferi Onayla",
   "Location": "Lokasyon",
   "The offline count has been successfully saved to the offline count screen.": "Çevrimdışı sayım ekranına başarıyla kaydedildi.",
-  "Transaction Inserted Successfully": "İşlem Başarıyla Tamamlandı"
+  "Transaction inserted successfully": "İşlem Başarıyla Tamamlandı"
 
 }
